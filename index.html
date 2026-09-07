@@ -69,10 +69,10 @@
   .view-intro { color: var(--text-muted); font-size: 0.88rem; margin: 0 0 16px; }
 
   .grid-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-  .filter-group { display: flex; gap: 6px; }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
   .filter-btn {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.15); color: var(--text-muted);
-    font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+    font-size: 0.75rem; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: var(--font-body);
   }
   .filter-btn.active { background: var(--amber); color: var(--water-deep); font-weight: 700; }
   
@@ -119,7 +119,7 @@
   .checkbox-label { display: flex; gap: 8px; font-size: 0.82rem; color: var(--text-muted); align-items: flex-start; cursor: pointer; }
   .checkbox-label input { margin-top: 3px; }
 
-  /* Modális ablakok (Popup) */
+  /* Modális ablakok */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none;
     align-items: center; justify-content: center; z-index: 1000; padding: 16px;
@@ -187,7 +187,6 @@
       <h2>Kölcsönös cserék</h2>
       <p class="view-intro">Azok a gyűjtők, akikkel kölcsönösen tudtok egymásnak matricát adni.</p>
       
-      <!-- ÚJ SZŰRŐ GOMBOK: -->
       <div class="filter-group" style="margin-bottom: 14px;">
         <button class="filter-btn active" id="btn-match-all">🌟 Legjobb cserék (Összes)</button>
         <button class="filter-btn" id="btn-match-city">📍 Csak a saját városomban</button>
@@ -311,9 +310,25 @@
   };
   let allUsersData = [];
   let currentFilter = 'all';
+  let matchFilter = 'all'; // 'all' vagy 'city'
 
   // ==========================================
-  // 2. AUTHENTICATION (Google + Email/Pass)
+  // 2. KÖZÖSSÉGI ADATOK FIGYELÉSE (LISTEN)
+  // ==========================================
+  function listenToAllUsers() {
+    db.collection("users").onSnapshot((snapshot) => {
+      allUsersData = [];
+      snapshot.forEach(doc => {
+        allUsersData.push({ id: doc.id, ...doc.data() });
+      });
+      renderMatches();
+    }, (error) => {
+      console.warn("Hiba a felhasználók lekérésekor:", error);
+    });
+  }
+
+  // ==========================================
+  // 3. AUTH & PROFIL (INTELLIGENS MERGE)
   // ==========================================
   auth.onAuthStateChanged(async (user) => {
     currentUser = user;
@@ -330,7 +345,7 @@
       `;
       document.getElementById('btn-logout').onclick = () => auth.signOut();
       closeAuthModal();
-      await loadUserDataFromFirestore(user);
+      await loadAndMergeUserData(user);
     } else {
       guestNotice.style.display = 'flex';
       authArea.innerHTML = `<button class="btn" id="btn-open-auth">Belépés / Fiók</button>`;
@@ -380,12 +395,29 @@
     }
   });
 
-  async function loadUserDataFromFirestore(user) {
+  // Intelligens adatbetöltés & összefésülés (Guest + Cloud merge)
+  async function loadAndMergeUserData(user) {
     const docRef = db.collection("users").doc(user.uid);
     const doc = await docRef.get();
 
     if (doc.exists) {
-      myProfile = { ...myProfile, ...doc.data() };
+      const cloudData = doc.data();
+      // Összefésüljük a helyi matricákat a felhőben lévőkkel
+      const mergedVan = Array.from(new Set([...myProfile.van, ...(cloudData.van || [])]));
+      const mergedKell = Array.from(new Set([...myProfile.kell, ...(cloudData.kell || [])]));
+
+      myProfile = {
+        ...cloudData,
+        van: mergedVan,
+        kell: mergedKell
+      };
+
+      // Visszamentjük az egyesített listát a felhőbe és helybe is
+      await docRef.update({
+        van: mergedVan,
+        kell: mergedKell,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
     } else {
       myProfile.nev = user.displayName || user.email.split('@')[0];
       myProfile.email = user.email || myProfile.email;
@@ -399,6 +431,10 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
+
+    localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
+    localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
+
     document.getElementById('prof-nev').value = myProfile.nev || '';
     document.getElementById('prof-telepules').value = myProfile.telepules || '';
     document.getElementById('prof-email').value = myProfile.email || '';
@@ -406,7 +442,7 @@
   }
 
   // ==========================================
-  // 3. MATRICARÁCS & SZŰRŐK
+  // 4. MATRICARÁCS KEZELÉSE
   // ==========================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
@@ -457,9 +493,9 @@
     }
   });
 
-  document.querySelectorAll('.filter-btn').forEach(btn => {
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentFilter = btn.dataset.filter;
       renderGrid();
@@ -467,10 +503,8 @@
   });
 
   // ==========================================
-  // 4. PÁROSÍTÁSOK & KERESŐ (SZŰRÉSSEL)
+  // 5. PÁROSÍTÁSOK SZŰRÉSSEL
   // ==========================================
-  let matchFilter = 'all'; // 'all' vagy 'city'
-
   document.getElementById('btn-match-all').addEventListener('click', function() {
     this.classList.add('active');
     document.getElementById('btn-match-city').classList.remove('active');
@@ -509,12 +543,10 @@
       })
       .filter(m => m.score > 0);
 
-    // Ha be van kapcsolva a város szerinti szűrés:
     if (matchFilter === 'city') {
       matches = matches.filter(m => m.isSameCity);
     }
 
-    // Rendezés: legtöbb cserélhető matrica száma szerint
     matches.sort((a, b) => b.score - a.score);
 
     if (matches.length === 0) {
@@ -536,6 +568,9 @@
     `).join('');
   }
 
+  // ==========================================
+  // 6. KERESŐ FUNKCIÓ
+  // ==========================================
   document.getElementById('btn-search').addEventListener('click', () => {
     const num = parseInt(document.getElementById('search-num').value, 10);
     const container = document.getElementById('search-results');
@@ -558,7 +593,7 @@
   });
 
   // ==========================================
-  // 5. KAPCSOLATFELVÉTELI MODAL KEZELÉSE
+  // 7. KAPCSOLAT MODAL
   // ==========================================
   let currentCopyEmail = '';
   let currentCopyMsg = '';
@@ -608,7 +643,7 @@
   });
 
   // ==========================================
-  // 6. PROFIL MENTÉS & EGYÉB
+  // 8. PROFIL MENTÉS
   // ==========================================
   document.getElementById('btn-save-profile').addEventListener('click', async () => {
     if (!currentUser) return showToast("Kérlek előbb lépj be a jobb felső sarokban!");
@@ -627,9 +662,10 @@
       gdprAccepted: true,
       gdprAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    showToast("Profil adatok sikeresen elmentve!");
+    showToast("Profil adatok elmentve a felhőbe!");
   });
 
+  // Tab navigáció
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -647,6 +683,7 @@
     setTimeout(() => { t.style.display = 'none'; }, 3500);
   }
 
+  // Indítás
   renderGrid();
 </script>
 </body>
