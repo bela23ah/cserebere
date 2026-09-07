@@ -144,7 +144,7 @@
 
 <div class="page">
   <header>
-    <h1 class="wordmark">🦦 Lutra Cserebere Platform <span>(Lidl 2026)</span></h1>
+    <h1 class="wordmark">🦦 Lutra Csere <span>(Lidl 2026)</span></h1>
     <div id="auth-area" class="auth-box">
       <button class="btn" id="btn-open-auth">Belépés / Fiók</button>
     </div>
@@ -186,6 +186,13 @@
     <section id="view-cserek" class="view">
       <h2>Kölcsönös cserék</h2>
       <p class="view-intro">Azok a gyűjtők, akikkel kölcsönösen tudtok egymásnak matricát adni.</p>
+      
+      <!-- ÚJ SZŰRŐ GOMBOK: -->
+      <div class="filter-group" style="margin-bottom: 14px;">
+        <button class="filter-btn active" id="btn-match-all">🌟 Legjobb cserék (Összes)</button>
+        <button class="filter-btn" id="btn-match-city">📍 Csak a saját városomban</button>
+      </div>
+
       <div id="matches-list">Adatok betöltése...</div>
     </section>
 
@@ -460,24 +467,36 @@
   });
 
   // ==========================================
-  // 4. PÁROSÍTÁSOK & KERESŐ
+  // 4. PÁROSÍTÁSOK & KERESŐ (SZŰRÉSSEL)
   // ==========================================
-  function listenToAllUsers() {
-    db.collection("users").onSnapshot((snapshot) => {
-      allUsersData = [];
-      snapshot.forEach(doc => {
-        allUsersData.push({ id: doc.id, ...doc.data() });
-      });
-      renderMatches();
-    });
-  }
+  let matchFilter = 'all'; // 'all' vagy 'city'
+
+  document.getElementById('btn-match-all').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('btn-match-city').classList.remove('active');
+    matchFilter = 'all';
+    renderMatches();
+  });
+
+  document.getElementById('btn-match-city').addEventListener('click', function() {
+    const myCity = (myProfile.telepules || '').trim();
+    if (!myCity) {
+      showToast("Előbb add meg a településedet a Profil fülön!");
+      return;
+    }
+    this.classList.add('active');
+    document.getElementById('btn-match-all').classList.remove('active');
+    matchFilter = 'city';
+    renderMatches();
+  });
 
   function renderMatches() {
     const list = document.getElementById('matches-list');
     const myVanSet = new Set(myProfile.van);
     const myKellSet = new Set(myProfile.kell);
+    const myCity = (myProfile.telepules || '').trim().toLowerCase();
 
-    const matches = allUsersData
+    let matches = allUsersData
       .filter(u => u.id !== (currentUser ? currentUser.uid : 'me'))
       .map(u => {
         const uKellSet = new Set(u.kell || []);
@@ -485,19 +504,29 @@
         const give = [...myVanSet].filter(n => uKellSet.has(n));
         const get = [...uVanSet].filter(n => myKellSet.has(n));
         const score = Math.min(give.length, get.length);
-        return { ...u, give, get, score };
+        const isSameCity = myCity && (u.telepules || '').trim().toLowerCase() === myCity;
+        return { ...u, give, get, score, isSameCity };
       })
-      .filter(m => m.score > 0)
-      .sort((a, b) => b.score - a.score);
+      .filter(m => m.score > 0);
+
+    // Ha be van kapcsolva a város szerinti szűrés:
+    if (matchFilter === 'city') {
+      matches = matches.filter(m => m.isSameCity);
+    }
+
+    // Rendezés: legtöbb cserélhető matrica száma szerint
+    matches.sort((a, b) => b.score - a.score);
 
     if (matches.length === 0) {
-      list.innerHTML = '<p class="view-intro">Jelenleg nincs kölcsönös csereegyezés. Jelölj be több matricát a Matricáim fülön!</p>';
+      list.innerHTML = matchFilter === 'city'
+        ? `<p class="view-intro">A te településeden (<strong>${myProfile.telepules}</strong>) jelenleg nincs kölcsönös cserepartner. Nézd meg az országos listát!</p>`
+        : '<p class="view-intro">Jelenleg nincs kölcsönös csereegyezés. Jelölj be több matricát a Matricáim fülön!</p>';
       return;
     }
 
     list.innerHTML = matches.map((m, idx) => `
       <div class="card ${idx === 0 ? 'card-top' : ''}">
-        <h3>${m.nev || 'Névtelen gyűjtő'} ${m.telepules ? `(${m.telepules})` : ''}</h3>
+        <h3>${m.nev || 'Névtelen gyűjtő'} ${m.telepules ? `(${m.telepules})` : ''} ${m.isSameCity ? '📍' : ''}</h3>
         <p><strong>Te adnád neki:</strong> ${m.give.join(', ')}</p>
         <p><strong>Ő adná neked:</strong> ${m.get.join(', ')}</p>
         <button class="btn" onclick="showContactModal('${m.email}', '${m.nev}', '${m.give.join(', ')}', '${m.get.join(', ')}')">
