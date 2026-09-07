@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="theme-color" content="#0D2E2C">
+<title>Lidl Lutra Matricacsere Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK (v9 compat mode - egyszerű integrációhoz) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --water-deep: #0D2E2C;
+    --water-mid: #14453F;
+    --water-light: #1D5750;
+    --moss: #6B8A5A;
+    --moss-soft: #93B382;
+    --sand: #E3D5B8;
+    --fur-brown: #8B5E3C;
+    --fur-brown-soft: #C99568;
+    --amber: #D89B4A;
+    --text-primary: #F3EEDF;
+    --text-muted: #9FB3A3;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Work Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--water-deep); color: var(--text-primary);
+    font-family: var(--font-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    border-bottom: 1px solid rgba(243,238,223,0.15); padding-bottom: 14px; margin-bottom: 18px;
+  }
+  .wordmark { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px; }
+  .auth-badge { font-size: 0.85rem; background: var(--water-mid); padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(243,238,223,0.2); }
+
+  .view-tabs { display: flex; overflow-x: auto; gap: 14px; margin-bottom: 20px; border-bottom: 1px solid rgba(243,238,223,0.1); }
+  .tab {
+    background: none; border: none; color: var(--text-muted); font-family: var(--font-body);
+    font-size: 0.95rem; font-weight: 600; padding: 8px 4px; cursor: pointer;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .tab.active { color: var(--text-primary); border-bottom-color: var(--amber); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+  h2 { font-family: var(--font-display); font-size: 1.5rem; margin: 0 0 6px; }
+  .view-intro { color: var(--text-muted); font-size: 0.88rem; margin: 0 0 16px; }
+
+  /* Szűrők & Statisztika */
+  .grid-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .filter-group { display: flex; gap: 6px; }
+  .filter-btn {
+    background: var(--water-mid); border: 1px solid rgba(243,238,223,0.15); color: var(--text-muted);
+    font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  }
+  .filter-btn.active { background: var(--amber); color: var(--water-deep); font-weight: 700; }
+  
+  .stats-badges { display: flex; gap: 8px; }
+  .stat-chip { font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; background: var(--water-mid); }
+  .stat-van strong { color: var(--moss-soft); }
+  .stat-kell strong { color: var(--fur-brown-soft); }
+
+  /* Matrica Grid */
+  #matrica-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; }
+  .matrica-cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    background: var(--water-mid); border: 1px solid rgba(243,238,223,0.12); border-radius: var(--radius-sm);
+    color: var(--text-muted); font-weight: 500; font-size: 0.8rem; cursor: pointer; position: relative;
+    user-select: none;
+  }
+  .matrica-cell.van { background: var(--moss); color: var(--water-deep); font-weight: 700; }
+  .matrica-cell.kell { background: var(--fur-brown); color: var(--text-primary); font-weight: 700; }
+
+  /* Kártyák */
+  .card {
+    background: var(--water-mid); border: 1px solid rgba(243,238,223,0.12);
+    border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px;
+  }
+  .card-top { border-left: 4px solid var(--amber); background: var(--water-light); }
+  .btn {
+    background: var(--moss); color: var(--water-deep); border: none; border-radius: 999px;
+    padding: 8px 16px; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none;
+    display: inline-block;
+  }
+  .btn:hover { filter: brightness(1.1); }
+
+  /* Kereső */
+  .search-box { display: flex; gap: 8px; margin-bottom: 20px; }
+  .input-field {
+    background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; flex: 1;
+  }
+
+  /* Form / Beállítások */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: var(--text-muted); }
+  .checkbox-label { display: flex; gap: 8px; font-size: 0.82rem; color: var(--text-muted); align-items: flex-start; cursor: pointer; }
+  .checkbox-label input { margin-top: 3px; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--amber); color: var(--water-deep); padding: 10px 20px;
+    border-radius: 999px; font-weight: 600; font-size: 0.85rem; display: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <h1 class="wordmark">🦦 Lutra Csere <span>(Lidl 2024)</span></h1>
+    <div id="auth-status" class="auth-badge">Belépés folyamatban...</div>
+  </header>
+
+  <nav class="view-tabs">
+    <button class="tab active" data-view="matricaim">Matricáim</button>
+    <button class="tab" data-view="cserek">Párosítások</button>
+    <button class="tab" data-view="kereso">Kinek van meg?</button>
+    <button class="tab" data-view="profil">Profil & E-mail</button>
+  </nav>
+
+  <main>
+    <!-- 1. MATRICÁIM NÉZET -->
+    <section id="view-matricaim" class="view active">
+      <h2>Gyűjteményem</h2>
+      <p class="view-intro">Kattints a számra: 1x = <strong>Zöld (Van duplám)</strong>, 2x = <strong>Barna (Hiányzik)</strong>, 3x = Üres.</p>
+      
+      <div class="grid-controls">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">Mind (144)</button>
+          <button class="filter-btn" data-filter="van">Csak Van</button>
+          <button class="filter-btn" data-filter="kell">Csak Hiányzik</button>
+        </div>
+        <div class="stats-badges">
+          <span class="stat-chip stat-van">Dupla: <strong id="count-van">0</strong></span>
+          <span class="stat-chip stat-kell">Hiányzik: <strong id="count-kell">0</strong></span>
+        </div>
+      </div>
+
+      <div id="matrica-grid"></div>
+    </section>
+
+    <!-- 2. PÁROSÍTÁSOK NÉZET -->
+    <section id="view-cserek" class="view">
+      <h2>Kölcsönös cserék</h2>
+      <p class="view-intro">Azok a felhasználók, akiknek van matricájuk számodra, és nekik is kell a te dupláidból.</p>
+      <div id="matches-list">Adatok betöltése...</div>
+    </section>
+
+    <!-- 3. KINEK VAN MEG? KERESŐ -->
+    <section id="view-kereso" class="view">
+      <h2>Matricakereső</h2>
+      <p class="view-intro">Keress rá egy konkrét számra, ha vásárolnál vagy más ajánlatot tennél.</p>
+      <div class="search-box">
+        <input type="number" id="search-num" class="input-field" placeholder="Pl. 42" min="1" max="144">
+        <button class="btn" id="btn-search">Keresés</button>
+      </div>
+      <div id="search-results"></div>
+    </section>
+
+    <!-- 4. PROFIL & ADATKEZELÉS -->
+    <section id="view-profil" class="view">
+      <h2>Saját profil</h2>
+      <p class="view-intro">Ezeket az adatokat látják a cserepartnerek a kapcsolatfelvételkor.</p>
+      
+      <div class="card">
+        <div class="form-group">
+          <label for="prof-nev">Becenév</label>
+          <input type="text" id="prof-nev" class="input-field" maxlength="25" placeholder="Pl. VidraPanni">
+        </div>
+        <div class="form-group">
+          <label for="prof-telepules">Település</label>
+          <input type="text" id="prof-telepules" class="input-field" placeholder="Pl. Kecskemét">
+        </div>
+        <div class="form-group">
+          <label for="prof-email">E-mail címed (a kapcsolatfelvételhez)</label>
+          <input type="email" id="prof-email" class="input-field" placeholder="pelda@email.hu">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="prof-gdpr">
+            Hozzájárulok, hogy a nevemet, településemet és e-mail címemet a csereplatform regisztrált tagjai megtekinthessék kapcsolatfelvétel céljából.
+          </label>
+        </div>
+        <button class="btn" id="btn-save-profile">Profil mentése</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // ==========================================
+  // 1. FIREBASE KONFIGURÁCIÓ
+  // ==========================================
+  // Másold be ide a saját Firebase Console-ból kapott adataidat:
+  const firebaseConfig = {
+    apiKey: "AIzaSyDEMO_API_KEY_HELYE",
+    authDomain: "lutra-csere.firebaseapp.com",
+    projectId: "lutra-csere",
+    storageBucket: "lutra-csere.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  };
+
+  // Firebase inicializálás (demó módban ha nincs még kulcsod, lokálisan fut)
+  let db = null;
+  let auth = null;
+  let currentUser = null;
+
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+  } catch (e) {
+    console.warn("Firebase nincs konfigurálva, mock módban fut!");
+  }
+
+  // ==========================================
+  // 2. GLOBÁLIS ÁLLAPOT & VÁLTOZÓK
+  // ==========================================
+  const ALBUM_SIZE = 144; // Lidl Lutra matrica darabszám
+  let myProfile = {
+    nev: "Új gyűjtő",
+    telepules: "Budapest",
+    email: "",
+    gdprAccepted: false,
+    van: [],
+    kell: []
+  };
+
+  let allUsersData = []; // Minden regisztrált felhasználó adatai a párosításhoz
+
+  // ==========================================
+  // 3. MATRICARÁCS & SZŰRÉS
+  // ==========================================
+  let currentFilter = 'all';
+
+  function renderGrid() {
+    const grid = document.getElementById('matrica-grid');
+    let html = '';
+    const vanSet = new Set(myProfile.van);
+    const kellSet = new Set(myProfile.kell);
+
+    for (let i = 1; i <= ALBUM_SIZE; i++) {
+      const isVan = vanSet.has(i);
+      const isKell = kellSet.has(i);
+
+      if (currentFilter === 'van' && !isVan) continue;
+      if (currentFilter === 'kell' && !isKell) continue;
+
+      let cls = '';
+      if (isVan) cls = 'van';
+      else if (isKell) cls = 'kell';
+
+      html += `<div class="matrica-cell ${cls}" data-num="${i}">${i}</div>`;
+    }
+    grid.innerHTML = html;
+    document.getElementById('count-van').textContent = myProfile.van.length;
+    document.getElementById('count-kell').textContent = myProfile.kell.length;
+  }
+
+  document.getElementById('matrica-grid').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('matrica-cell')) return;
+    const num = parseInt(e.target.dataset.num, 10);
+    const vanIdx = myProfile.van.indexOf(num);
+    const kellIdx = myProfile.kell.indexOf(num);
+
+    if (vanIdx > -1) {
+      myProfile.van.splice(vanIdx, 1);
+      myProfile.kell.push(num);
+    } else if (kellIdx > -1) {
+      myProfile.kell.splice(kellIdx, 1);
+    } else {
+      myProfile.van.push(num);
+    }
+
+    renderGrid();
+    syncToFirebase();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderGrid();
+    });
+  });
+
+  // ==========================================
+  // 4. PÁROSÍTÁSOK SZÁMÍTÁSA
+  // ==========================================
+  function renderMatches() {
+    const list = document.getElementById('matches-list');
+    const myVanSet = new Set(myProfile.van);
+    const myKellSet = new Set(myProfile.kell);
+
+    const matches = allUsersData
+      .filter(u => u.id !== (currentUser ? currentUser.uid : 'me'))
+      .map(u => {
+        const uKellSet = new Set(u.kell || []);
+        const uVanSet = new Set(u.van || []);
+        const give = [...myVanSet].filter(n => uKellSet.has(n));
+        const get = [...uVanSet].filter(n => myKellSet.has(n));
+        const score = Math.min(give.length, get.length);
+        return { ...u, give, get, score };
+      })
+      .filter(m => m.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (matches.length === 0) {
+      list.innerHTML = '<p class="view-intro">Jelenleg nincs kölcsönös csereegyezés. Jelölj be több matricát!</p>';
+      return;
+    }
+
+    list.innerHTML = matches.map((m, idx) => `
+      <div class="card ${idx === 0 ? 'card-top' : ''}">
+        <h3>${m.nev || 'Névtelen gyűjtő'} (${m.telepules || 'Ismeretlen hely'})</h3>
+        <p><strong>Te adnád:</strong> ${m.give.join(', ')}</p>
+        <p><strong>Ő adná:</strong> ${m.get.join(', ')}</p>
+        <button class="btn" onclick="openContact('${m.email}', '${m.nev}', '${m.give.join(',')}', '${m.get.join(',')}')">
+          Kapcsolatfelvétel e-mailben
+        </button>
+      </div>
+    `).join('');
+  }
+
+  // ==========================================
+  // 5. KERESŐ FUNKCIÓ
+  // ==========================================
+  document.getElementById('btn-search').addEventListener('click', () => {
+    const num = parseInt(document.getElementById('search-num').value, 10);
+    const container = document.getElementById('search-results');
+    if (!num || num < 1 || num > ALBUM_SIZE) {
+      showToast("Kérlek adj meg egy érvényes számot 1 és 144 között!");
+      return;
+    }
+
+    const owners = allUsersData.filter(u => (u.van || []).includes(num));
+
+    if (owners.length === 0) {
+      container.innerHTML = `<p class="view-intro">A(z) <strong>#${num}</strong>-os matrica jelenleg senkinél sincs duplában.</p>`;
+      return;
+    }
+
+    container.innerHTML = owners.map(u => `
+      <div class="card">
+        <h3>${u.nev} (${u.telepules || 'Helyszín nincs megadva'})</h3>
+        <p>Nála megvan a(z) <strong>#${num}</strong>-os matrica.</p>
+        <button class="btn" onclick="openDirectContact('${u.email}', '${u.nev}', ${num})">Érdekel a matrica</button>
+      </div>
+    `).join('');
+  });
+
+  // ==========================================
+  // 6. E-MAIL KÜLDÉS / KAPCSOLAT
+  // ==========================================
+  window.openContact = (email, nev, give, get) => {
+    if (!email) { showToast("Ez a felhasználó még nem adott meg e-mail címet!"); return; }
+    const subject = encodeURIComponent("Lutra matricacsere megkeresés");
+    const body = encodeURIComponent(`Szia ${nev}!\n\nA Lutra csereplatformon láttam, hogy tudnánk cserélni.\nÉn adnám: ${give}\nTe adnád: ${get}\n\nMegfelelne a csere postán vagy személyesen?`);
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  };
+
+  window.openDirectContact = (email, nev, num) => {
+    if (!email) { showToast("Nincs megadva e-mail cím!"); return; }
+    const subject = encodeURIComponent(`Lutra matrica érdeklődés (#${num})`);
+    const body = encodeURIComponent(`Szia ${nev}!\n\nA Lutra platformon láttam, hogy van duplád a #${num}-os matricából. Szeretnék érdeklődni, hogyan tudnánk lebonyolítani a cserét/átadást.`);
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  };
+
+  // ==========================================
+  // 7. FIREBASE SZINKRONIZÁCIÓ & AUTH
+  // ==========================================
+  async function initAuth() {
+    if (!auth) return;
+    // Névtelen vagy meglévő bejelentkezés
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('auth-status').textContent = "🟢 Csatlakozva";
+        loadUserData(user.uid);
+        listenToAllUsers();
+      } else {
+        auth.signInAnonymously();
+      }
+    });
+  }
+
+  async function loadUserData(uid) {
+    if (!db) return;
+    const doc = await db.collection("users").doc(uid).get();
+    if (doc.exists) {
+      myProfile = { ...myProfile, ...doc.data() };
+      document.getElementById('prof-nev').value = myProfile.nev || '';
+      document.getElementById('prof-telepules').value = myProfile.telepules || '';
+      document.getElementById('prof-email').value = myProfile.email || '';
+      document.getElementById('prof-gdpr').checked = myProfile.gdprAccepted || false;
+      renderGrid();
+    }
+  }
+
+  function listenToAllUsers() {
+    if (!db) return;
+    db.collection("users").onSnapshot((snapshot) => {
+      allUsersData = [];
+      snapshot.forEach(doc => {
+        allUsersData.push({ id: doc.id, ...doc.data() });
+      });
+      renderMatches();
+    });
+  }
+
+  async function syncToFirebase() {
+    if (!db || !currentUser) return;
+    try {
+      await db.collection("users").doc(currentUser.uid).set({
+        van: myProfile.van,
+        kell: myProfile.kell,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error("Hiba a mentéskor:", err);
+    }
+  }
+
+  document.getElementById('btn-save-profile').addEventListener('click', async () => {
+    const gdpr = document.getElementById('prof-gdpr').checked;
+    if (!gdpr) {
+      showToast("A közzétételhez el kell fogadnod az adatkezelést!");
+      return;
+    }
+    myProfile.nev = document.getElementById('prof-nev').value || 'Névtelen';
+    myProfile.telepules = document.getElementById('prof-telepules').value || '';
+    myProfile.email = document.getElementById('prof-email').value || '';
+    myProfile.gdprAccepted = true;
+
+    if (db && currentUser) {
+      await db.collection("users").doc(currentUser.uid).set({
+        nev: myProfile.nev,
+        telepules: myProfile.telepules,
+        email: myProfile.email,
+        gdprAccepted: true,
+        gdprAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      showToast("Profil sikeresen mentve a felhőbe!");
+    } else {
+      showToast("Helyi profil frissítve!");
+    }
+  });
+
+  // Tab váltó & Segédfüggvények
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('view-' + t.dataset.view).classList.add('active');
+      if (t.dataset.view === 'cserek') renderMatches();
+    });
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  // Indítás
+  renderGrid();
+  initAuth();
+</script>
+</body>
+</html>
