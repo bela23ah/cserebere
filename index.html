@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <meta name="theme-color" content="#0D2E2C">
-<title>Lutra Album Csereplatform — Lidl 2026</title>
+<title>Lutra Csereplatform — Lidl 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,7 +49,6 @@
   
   .auth-box { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
   .user-badge { display: flex; align-items: center; gap: 6px; background: var(--water-mid); padding: 4px 10px; border-radius: 999px; }
-  .user-badge img { width: 22px; height: 22px; border-radius: 50%; }
 
   .notice-banner {
     background: rgba(216, 155, 74, 0.15); border: 1px solid var(--amber); border-radius: var(--radius-sm);
@@ -103,7 +102,7 @@
   .btn {
     background: var(--moss); color: var(--water-deep); border: none; border-radius: 999px;
     padding: 8px 16px; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-body);
   }
   .btn-google { background: #FFFFFF; color: #333333; }
   .btn-secondary { background: transparent; border: 1px solid rgba(243,238,223,0.3); color: var(--text-primary); }
@@ -112,7 +111,7 @@
   .search-box { display: flex; gap: 8px; margin-bottom: 20px; }
   .input-field {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
-    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; width: 100%;
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; width: 100%; font-family: var(--font-body);
   }
 
   .form-group { margin-bottom: 14px; }
@@ -120,11 +119,24 @@
   .checkbox-label { display: flex; gap: 8px; font-size: 0.82rem; color: var(--text-muted); align-items: flex-start; cursor: pointer; }
   .checkbox-label input { margin-top: 3px; }
 
+  /* Modális ablakok (Popup) */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none;
+    align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card {
+    background: var(--water-deep); border: 1px solid var(--amber); border-radius: var(--radius-md);
+    padding: 24px; max-width: 440px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
+  }
+  .modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+  .copy-box { background: var(--water-mid); padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; margin: 10px 0; word-break: break-all; }
+
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: var(--amber); color: var(--water-deep); padding: 10px 20px;
     border-radius: 999px; font-weight: 600; font-size: 0.85rem; display: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 100; text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 2000; text-align: center;
   }
 </style>
 </head>
@@ -132,14 +144,14 @@
 
 <div class="page">
   <header>
-    <h1 class="wordmark">🦦 Lutra Album Cserebere <span>(Lidl 2026)</span></h1>
+    <h1 class="wordmark">🦦 Lutra Csere <span>(Lidl 2026)</span></h1>
     <div id="auth-area" class="auth-box">
-      <button class="btn btn-google" id="btn-login">Google Belépés</button>
+      <button class="btn" id="btn-open-auth">Belépés / Fiók</button>
     </div>
   </header>
 
   <div id="guest-notice" class="notice-banner">
-    <span>💡 <strong>Vendég mód:</strong> Jelöld a matricáidat bátran! Ha belépsz Google-lal, a telefonodon és a PC-den is megmaradnak.</span>
+    <span>💡 <strong>Vendég mód:</strong> Jelölhetsz szabadon! Ha belépsz, a gyűjteményed a telefonodon és a gépeden is megmarad.</span>
   </div>
 
   <nav class="view-tabs">
@@ -203,8 +215,8 @@
           <input type="text" id="prof-telepules" class="input-field" placeholder="Pl. Kecskemét">
         </div>
         <div class="form-group">
-          <label for="prof-email">Kapcsolattartási e-mail</label>
-          <input type="email" id="prof-email" class="input-field" placeholder="pelda@gmail.com">
+          <label for="prof-email">Kapcsolattartási e-mail (Freemail, Gmail stb.)</label>
+          <input type="email" id="prof-email" class="input-field" placeholder="pelda@freemail.hu">
         </div>
         <div class="form-group">
           <label class="checkbox-label">
@@ -218,11 +230,53 @@
   </main>
 </div>
 
+<!-- BELÉPÉS / REGISZTRÁCIÓ MODAL -->
+<div id="modal-auth" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <h3 style="margin-top:0;">Belépés / Regisztráció</h3>
+    <button class="btn btn-google" id="btn-google-login" style="width:100%; margin-bottom:14px;">
+      Belépés Google-lal (1 kattintás)
+    </button>
+    <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-bottom:14px;">— vagy e-mail címmel —</div>
+    
+    <div class="form-group">
+      <label>E-mail cím</label>
+      <input type="email" id="auth-email" class="input-field" placeholder="pelda@freemail.hu">
+    </div>
+    <div class="form-group">
+      <label>Jelszó (min. 6 karakter)</label>
+      <input type="password" id="auth-pass" class="input-field" placeholder="******">
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" id="btn-email-login" style="flex:1;">Belépés</button>
+      <button class="btn btn-secondary" id="btn-email-signup" style="flex:1;">Új Regisztráció</button>
+    </div>
+  </div>
+</div>
+
+<!-- KAPCSOLATFELVÉTELI MODAL -->
+<div id="modal-contact" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeContactModal()">✕</button>
+    <h3 id="contact-modal-title" style="margin-top:0;">Kapcsolatfelvétel</h3>
+    <p style="font-size:0.85rem; color:var(--text-muted);">Partner e-mail címe:</p>
+    <div class="copy-box" id="contact-email-text"></div>
+    <button class="btn btn-secondary" id="btn-copy-email" style="width:100%; margin-bottom:12px;">📋 E-mail cím másolása</button>
+
+    <p style="font-size:0.85rem; color:var(--text-muted);">Javasolt üzenet:</p>
+    <div class="copy-box" id="contact-msg-text" style="white-space:pre-line;"></div>
+    <button class="btn btn-secondary" id="btn-copy-msg" style="width:100%; margin-bottom:12px;">📋 Üzenet másolása</button>
+
+    <a id="contact-mailto-link" href="#" class="btn" style="width:100%;">✉️ Megnyitás a levelezőmben</a>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
   // ==========================================
-  // 1. FIREBASE INITIALIZÁLÁS (A TE PROJEKTED)
+  // 1. FIREBASE INITIALIZÁLÁS
   // ==========================================
   const firebaseConfig = {
     apiKey: "AIzaSyDatTdD6Ggcf7LbWZ0zBAyXf1JkspM6CEs",
@@ -238,9 +292,6 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
 
-  // ==========================================
-  // 2. GLOBÁLIS ÁLLAPOT
-  // ==========================================
   const ALBUM_SIZE = 108;
   let currentUser = null;
   let myProfile = {
@@ -255,7 +306,7 @@
   let currentFilter = 'all';
 
   // ==========================================
-  // 3. AUTH & PROFIL KEZELÉS
+  // 2. AUTHENTICATION (Google + Email/Pass)
   // ==========================================
   auth.onAuthStateChanged(async (user) => {
     currentUser = user;
@@ -266,34 +317,61 @@
       guestNotice.style.display = 'none';
       authArea.innerHTML = `
         <div class="user-badge">
-          <img src="${user.photoURL || 'https://via.placeholder.com/22'}" alt="Avatar">
-          <span>${user.displayName || 'Bejelentkezve'}</span>
+          <span>👤 ${user.displayName || user.email.split('@')[0]}</span>
         </div>
         <button class="btn btn-secondary" id="btn-logout" style="padding: 4px 10px; font-size: 0.75rem;">Kilépés</button>
       `;
       document.getElementById('btn-logout').onclick = () => auth.signOut();
-      
-      // Adatok betöltése Firestore-ból
+      closeAuthModal();
       await loadUserDataFromFirestore(user);
     } else {
       guestNotice.style.display = 'flex';
-      authArea.innerHTML = `<button class="btn btn-google" id="btn-login">Google Belépés</button>`;
-      document.getElementById('btn-login').onclick = loginWithGoogle;
+      authArea.innerHTML = `<button class="btn" id="btn-open-auth">Belépés / Fiók</button>`;
+      document.getElementById('btn-open-auth').onclick = openAuthModal;
     }
     renderGrid();
     listenToAllUsers();
   });
 
-  async function loginWithGoogle() {
+  function openAuthModal() { document.getElementById('modal-auth').classList.add('open'); }
+  function closeAuthModal() { document.getElementById('modal-auth').classList.remove('open'); }
+
+  // Google Belépés
+  document.getElementById('btn-google-login').addEventListener('click', async () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
       await auth.signInWithPopup(provider);
-      showToast("Sikeres bejelentkezés!");
+      showToast("Sikeres belépés Google-lal!");
     } catch (err) {
-      console.error(err);
-      showToast("Hiba a belépés során: " + err.message);
+      showToast("Hiba: " + err.message);
     }
-  }
+  });
+
+  // E-mail Belépés
+  document.getElementById('btn-email-login').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass = document.getElementById('auth-pass').value;
+    if (!email || !pass) return showToast("Add meg az e-mail címet és a jelszót!");
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      showToast("Sikeres belépés!");
+    } catch (err) {
+      showToast("Sikertelen belépés: Hibás adatok!");
+    }
+  });
+
+  // E-mail Új Regisztráció
+  document.getElementById('btn-email-signup').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass = document.getElementById('auth-pass').value;
+    if (!email || pass.length < 6) return showToast("Legalább 6 karakteres jelszó szükséges!");
+    try {
+      await auth.createUserWithEmailAndPassword(email, pass);
+      showToast("Sikeres regisztráció!");
+    } catch (err) {
+      showToast("Hiba: " + err.message);
+    }
+  });
 
   async function loadUserDataFromFirestore(user) {
     const docRef = db.collection("users").doc(user.uid);
@@ -302,8 +380,7 @@
     if (doc.exists) {
       myProfile = { ...myProfile, ...doc.data() };
     } else {
-      // Új belépő: a korábbi helyi matricákat és Google adatokat mentjük
-      myProfile.nev = user.displayName || myProfile.nev;
+      myProfile.nev = user.displayName || user.email.split('@')[0];
       myProfile.email = user.email || myProfile.email;
       await docRef.set({
         nev: myProfile.nev,
@@ -322,7 +399,7 @@
   }
 
   // ==========================================
-  // 4. MATRICARÁCS KEZELÉSE
+  // 3. MATRICARÁCS & SZŰRŐK
   // ==========================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
@@ -360,7 +437,6 @@
       myProfile.van.push(num);
     }
 
-    // Mentés helyben és felhőben is
     localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
     localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
     renderGrid();
@@ -384,7 +460,7 @@
   });
 
   // ==========================================
-  // 5. KÖZÖSSÉGI ADATOK ÉS PÁROSÍTÁSOK
+  // 4. PÁROSÍTÁSOK & KERESŐ
   // ==========================================
   function listenToAllUsers() {
     db.collection("users").onSnapshot((snapshot) => {
@@ -424,16 +500,13 @@
         <h3>${m.nev || 'Névtelen gyűjtő'} ${m.telepules ? `(${m.telepules})` : ''}</h3>
         <p><strong>Te adnád neki:</strong> ${m.give.join(', ')}</p>
         <p><strong>Ő adná neked:</strong> ${m.get.join(', ')}</p>
-        <button class="btn" onclick="openContact('${m.email}', '${m.nev}', '${m.give.join(',')}', '${m.get.join(',')}')">
-          Kapcsolatfelvétel e-mailben
+        <button class="btn" onclick="showContactModal('${m.email}', '${m.nev}', '${m.give.join(', ')}', '${m.get.join(', ')}')">
+          Kapcsolatfelvétel
         </button>
       </div>
     `).join('');
   }
 
-  // ==========================================
-  // 6. KERESŐ & PROFIL MENTÉS
-  // ==========================================
   document.getElementById('btn-search').addEventListener('click', () => {
     const num = parseInt(document.getElementById('search-num').value, 10);
     const container = document.getElementById('search-results');
@@ -443,28 +516,76 @@
     }
     const owners = allUsersData.filter(u => (u.van || []).includes(num) && u.id !== (currentUser ? currentUser.uid : ''));
     if (owners.length === 0) {
-      container.innerHTML = `<p class="view-intro">A(z) <strong>#${num}</strong>-os matrica jelenleg egyetlen másik regisztrált tagnál sincs duplában.</p>`;
+      container.innerHTML = `<p class="view-intro">A(z) <strong>#${num}</strong>-os matrica jelenleg senkinél sincs duplában.</p>`;
       return;
     }
     container.innerHTML = owners.map(u => `
       <div class="card">
         <h3>${u.nev || 'Névtelen'} ${u.telepules ? `(${u.telepules})` : ''}</h3>
         <p>Nála megvan a(z) <strong>#${num}</strong>-os matrica.</p>
-        <button class="btn" onclick="openDirectContact('${u.email}', '${u.nev}', ${num})">Érdekel ez a matrica</button>
+        <button class="btn" onclick="showDirectContactModal('${u.email}', '${u.nev}', ${num})">Érdekel ez a matrica</button>
       </div>
     `).join('');
   });
 
+  // ==========================================
+  // 5. KAPCSOLATFELVÉTELI MODAL KEZELÉSE
+  // ==========================================
+  let currentCopyEmail = '';
+  let currentCopyMsg = '';
+
+  window.showContactModal = (email, nev, give, get) => {
+    if (!email) return showToast("Ez a felhasználó nem adott meg e-mail címet!");
+    currentCopyEmail = email;
+    currentCopyMsg = `Szia ${nev}!\n\nA Lutra 2026 csereplatformon láttam, hogy tudnánk cserélni.\n\nÉn tudom adni: ${give}\nTe tudod adni: ${get}\n\nMegfelelne a csere postán vagy személyesen?`;
+    
+    document.getElementById('contact-modal-title').textContent = `Kapcsolatfelvétel: ${nev}`;
+    document.getElementById('contact-email-text').textContent = currentCopyEmail;
+    document.getElementById('contact-msg-text').textContent = currentCopyMsg;
+
+    const subject = encodeURIComponent("Lutra 2026 matricacsere");
+    const body = encodeURIComponent(currentCopyMsg);
+    document.getElementById('contact-mailto-link').href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+    document.getElementById('modal-contact').classList.add('open');
+  };
+
+  window.showDirectContactModal = (email, nev, num) => {
+    if (!email) return showToast("Ez a felhasználó nem adott meg e-mail címet!");
+    currentCopyEmail = email;
+    currentCopyMsg = `Szia ${nev}!\n\nA Lutra platformon láttam, hogy van duplád a #${num}-os matricából. Szeretnék érdeklődni, hogyan tudnánk lebonyolítani az átadást!`;
+
+    document.getElementById('contact-modal-title').textContent = `Érdeklődés: #${num} matrica`;
+    document.getElementById('contact-email-text').textContent = currentCopyEmail;
+    document.getElementById('contact-msg-text').textContent = currentCopyMsg;
+
+    const subject = encodeURIComponent(`Lutra matrica érdeklődés (#${num})`);
+    const body = encodeURIComponent(currentCopyMsg);
+    document.getElementById('contact-mailto-link').href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+    document.getElementById('modal-contact').classList.add('open');
+  };
+
+  function closeContactModal() { document.getElementById('modal-contact').classList.remove('open'); }
+
+  document.getElementById('btn-copy-email').addEventListener('click', () => {
+    navigator.clipboard.writeText(currentCopyEmail);
+    showToast("E-mail cím vágólapra másolva!");
+  });
+
+  document.getElementById('btn-copy-msg').addEventListener('click', () => {
+    navigator.clipboard.writeText(currentCopyMsg);
+    showToast("Üzenet szövege vágólapra másolva!");
+  });
+
+  // ==========================================
+  // 6. PROFIL MENTÉS & EGYÉB
+  // ==========================================
   document.getElementById('btn-save-profile').addEventListener('click', async () => {
-    if (!currentUser) {
-      showToast("Kérlek előbb lépj be a Google gombbal a fejlécben!");
-      return;
-    }
+    if (!currentUser) return showToast("Kérlek előbb lépj be a jobb felső sarokban!");
     const gdpr = document.getElementById('prof-gdpr').checked;
-    if (!gdpr) {
-      showToast("A közzétételhez kötelező elfogadni az e-mail megosztást!");
-      return;
-    }
+    if (!gdpr) return showToast("A közzétételhez el kell fogadnod az e-mail megosztást!");
+
     myProfile.nev = document.getElementById('prof-nev').value || 'Névtelen gyűjtő';
     myProfile.telepules = document.getElementById('prof-telepules').value || '';
     myProfile.email = document.getElementById('prof-email').value || currentUser.email || '';
@@ -477,24 +598,9 @@
       gdprAccepted: true,
       gdprAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    showToast("Profil adatok elmentve a felhőbe!");
+    showToast("Profil adatok sikeresen elmentve!");
   });
 
-  window.openContact = (email, nev, give, get) => {
-    if (!email) { showToast("Nincs megadva e-mail cím."); return; }
-    const subject = encodeURIComponent("Lutra 2026 matricacsere");
-    const body = encodeURIComponent(`Szia ${nev}!\n\nA Lutra csereplatformon találtam meg a profilodat.\n\nÉn tudnám adni neked: ${give}\nTe tudnád adni nekem: ${get}\n\nMegfelelne a csere?`);
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  };
-
-  window.openDirectContact = (email, nev, num) => {
-    if (!email) { showToast("Nincs megadva e-mail cím."); return; }
-    const subject = encodeURIComponent(`Lutra 2026 érdeklődés (#${num})`);
-    const body = encodeURIComponent(`Szia ${nev}!\n\nA platformon láttam, hogy van duplád a #${num}-os matricából. Szeretnék érdeklődni a részletekről!`);
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  };
-
-  // Tab navigáció
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
