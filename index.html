@@ -90,7 +90,7 @@
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
     padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: var(--font-body);
   }
-  .mode-btn.active { background: var(--amber); color: var(--water-deep); border-color: var(--amber); }
+  .mode-btn.active { background: var(--amber); color: var(--water-deep); border-color: var(--amber); font-weight: 700; }
 
   /* Gombok és vezérlők */
   .grid-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
@@ -124,7 +124,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid var(--water-deep); z-index: 5; pointer-events: none;
   }
 
-  /* 2. VALÓS KÉTOLDALAS ALBUM NÉZET */
+  /* 2. VALÓS ARÁNYOS KÉTOLDALAS ALBUM NÉZET */
   .book-nav {
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     margin-bottom: 14px; background: var(--water-mid); padding: 8px 14px; border-radius: var(--radius-md);
@@ -158,47 +158,54 @@
   }
 
   .single-page-card {
-    background: var(--page-bg); border-radius: 12px; padding: 12px;
-    border: 1px dashed var(--slot-border); display: flex; flex-direction: column; min-height: 280px;
+    background: var(--page-bg); border-radius: 12px; padding: 14px 10px;
+    border: 1px dashed var(--slot-border); display: flex; flex-direction: column; min-height: 320px;
   }
   .single-page-header {
     display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);
-    font-weight: 600; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid rgba(243,238,223,0.08);
+    font-weight: 600; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid rgba(243,238,223,0.08);
   }
 
   .page-slots-layout {
-    display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-around;
+    display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: space-around;
   }
-  .slot-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+  .slot-row {
+    display: flex; gap: 8px; width: 100%; align-items: center; justify-content: center;
+  }
   .slot-row.align-center { justify-content: center; }
   .slot-row.align-left { justify-content: flex-start; }
   .slot-row.align-right { justify-content: flex-end; }
-  .slot-row.align-space { justify-content: space-between; }
+  .slot-row.align-space { justify-content: space-around; }
 
   .slot {
     border: 2px dashed var(--slot-border); border-radius: 8px; background: rgba(13, 46, 44, 0.45);
-    padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 6px 4px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     cursor: pointer; text-align: center; user-select: none; transition: transform 0.1s, background-color 0.15s;
-    position: relative; flex: 1; min-height: 80px;
+    position: relative; flex: 0 1 auto;
   }
-  .slot:hover { border-color: var(--amber); transform: scale(1.02); }
-  .slot.orient-allo { aspect-ratio: 3 / 4; max-width: 140px; }
-  .slot.orient-fekvo { aspect-ratio: 4 / 3; width: 100%; }
-  .slot .sticker-num { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-muted); }
-  .slot .sticker-name { font-size: 0.72rem; font-weight: 500; margin: 2px 0; line-height: 1.15; }
-  .slot .sticker-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 999px; background: rgba(0,0,0,0.25); }
+  .slot:hover { border-color: var(--amber); transform: scale(1.03); }
+  
+  .slot.orient-allo { width: 95px; height: 126px; aspect-ratio: 3 / 4; }
+  .slot.orient-fekvo { width: 126px; height: 95px; aspect-ratio: 4 / 3; }
+  
+  .slot .sticker-num { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text-muted); }
+  .slot .sticker-name { font-size: 0.68rem; font-weight: 500; margin: 2px 0; line-height: 1.15; max-height: 2.3em; overflow: hidden; }
+  .slot .sticker-tag { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 999px; background: rgba(0,0,0,0.25); }
 
   .combo-wrapper {
-    width: 100%; display: flex; flex-direction: column;
+    width: 252px; height: 95px; display: flex; flex-direction: column;
     border: 2px dashed var(--slot-border); border-radius: 8px; background: rgba(13, 46, 44, 0.45); overflow: hidden;
+    flex: 0 1 auto;
   }
-  .combo-title { background: rgba(0,0,0,0.35); font-size: 0.72rem; text-align: center; padding: 2px; font-weight: 600; color: var(--sand); }
+  .combo-title { background: rgba(0,0,0,0.35); font-size: 0.68rem; text-align: center; padding: 2px; font-weight: 600; color: var(--sand); }
   .combo-halves { display: flex; flex: 1; }
   .combo-half {
-    flex: 1; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    cursor: pointer; min-height: 80px; text-align: center; transition: background-color 0.15s; position: relative;
+    flex: 1; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    cursor: pointer; text-align: center; transition: background-color 0.15s; position: relative;
   }
   .combo-half:first-child { border-right: 1px dashed rgba(227, 213, 184, 0.3); }
+  .combo-half .sticker-num { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text-muted); }
+  .combo-half .sticker-tag { font-size: 0.6rem; font-weight: 700; }
 
   .slot.van, .combo-half.van { background: var(--moss) !important; color: var(--water-deep); border-style: solid; border-color: var(--moss-soft); }
   .slot.van .sticker-num, .combo-half.van .sticker-num,
@@ -226,7 +233,6 @@
   .btn-danger { background: var(--danger); color: #FFFFFF; }
   .btn-fb { background: #1877F2; color: #FFFFFF; }
   
-  /* Kiemelt Fotóbeolvasó Gomb */
   .btn-scanner-highlight {
     background: var(--amber); color: var(--water-deep); font-weight: 700;
     box-shadow: 0 3px 12px rgba(216, 155, 74, 0.35); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -250,7 +256,6 @@
     padding: 14px; margin-bottom: 16px; display: none;
   }
 
-  /* Statisztika listák */
   .stats-ranking-list { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 6px; }
   .stats-ranking-item {
     display: flex; justify-content: space-between; align-items: center;
@@ -260,13 +265,14 @@
   /* Gyors Darabszám Buborék Popover */
   .qty-popover {
     position: fixed; background: var(--water-deep); border: 1.5px solid var(--amber); border-radius: 999px;
-    padding: 4px 8px; display: none; gap: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2000;
-    align-items: center; transform: translate(-50%, -120%);
+    padding: 4px 6px; display: none; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2500;
+    align-items: center; max-width: calc(100vw - 20px);
   }
   .qty-popover.open { display: flex; }
   .qty-pop-btn {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.2); color: var(--sand);
-    padding: 4px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    padding: 4px 8px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    min-width: 32px; text-align: center;
   }
   .qty-pop-btn.active, .qty-pop-btn:hover { background: var(--amber); color: var(--water-deep); }
 
@@ -441,7 +447,7 @@
       <div id="search-results"></div>
     </section>
 
-    <!-- 4. STATISZTIKA (ÉLŐ RITKASÁG-MUTATÓ) -->
+    <!-- 4. STATISZTIKA -->
     <section id="view-statisztika" class="view">
       <div style="display:flex; justify-content:space-between; align-items:baseline;">
         <h2>Országos Ritkaság-mutató</h2>
@@ -499,7 +505,7 @@
 
       <div class="card" style="text-align:center;">
         <h3 style="margin:0 0 6px; font-size:1rem;">🏆 Bolygóvédő Szuperhős Oklevél</h3>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px;">Ha betelt az albumod (0 hiányzó), itt bármikor megtekintheted az okleveledet:</p>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 10px;">Ha betelt az albumod (mind a 108 matrica megvan), itt megtekintheted az okleveledet:</p>
         <button class="btn btn-secondary" id="btn-view-certificate" style="font-size:0.8rem; padding:6px 14px;">Oklevél megtekintése</button>
       </div>
     </section>
@@ -515,16 +521,16 @@
   </footer>
 </div>
 
-<!-- GYORS DARABSZÁM BUBORÉK -->
+<!-- GYORS DARABSZÁM BUBORÉK (KÉPERNYŐSZÉL-VÉDELEMMEL) -->
 <div id="qty-popover" class="qty-popover">
   <button class="qty-pop-btn" data-qty="1">1×</button>
   <button class="qty-pop-btn" data-qty="2">2×</button>
   <button class="qty-pop-btn" data-qty="3">3×</button>
   <button class="qty-pop-btn" data-qty="4">4×</button>
-  <button class="qty-pop-btn" data-qty="5">5+</button>
+  <button class="qty-pop-btn" data-qty="5">5×</button>
 </div>
 
-<!-- FOTÓBEOLVASÓ (AI VISION) MODAL -->
+<!-- FOTÓBEOLVASÓ (AI VISION MODAL) -->
 <div id="modal-scanner" class="modal-overlay">
   <div class="modal-card">
     <button class="modal-close" onclick="closeScannerModal()">✕</button>
@@ -542,7 +548,6 @@
       ✨ Kép elemzése és számok kiolvasása...
     </div>
 
-    <!-- Eredmények és célválasztó -->
     <div id="scanner-results-box" style="display:none;">
       <div style="font-size:0.85rem; margin-bottom:6px; font-weight:600;">
         Felismert matricák (<span id="scanner-count-label">0</span> db):
@@ -640,8 +645,19 @@
 
 <script>
   // =========================================================================
-  // 1. FIREBASE INITIALIZÁLÁS
+  // 0. BIZTONSÁGOS ADATTISZTÍTÓ
   // =========================================================================
+  function ensureArray(val) {
+    if (Array.isArray(val)) return val.map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 108);
+    if (val && typeof val === 'object') return Object.keys(val).map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 108);
+    return [];
+  }
+
+  // =========================================================================
+  // 1. PROXY & FIREBASE KONFIGURÁCIÓ
+  // =========================================================================
+  const SCANNER_API_URL = "https://blue-bread-cef1.gyorgy-harkai.workers.dev";
+
   const firebaseConfig = {
     apiKey: "AIzaSyDatTdD6Ggcf7LbWZ0zBAyXf1JkspM6CEs",
     authDomain: "lutra-csereplatform.firebaseapp.com",
@@ -664,16 +680,16 @@
     email: "",
     isGiftOffering: false,
     gdprAccepted: false,
-    van: JSON.parse(localStorage.getItem('lutra_van') || '[]'),
+    van: ensureArray(JSON.parse(localStorage.getItem('lutra_van') || '[]')),
     vanCounts: JSON.parse(localStorage.getItem('lutra_van_counts') || '{}'),
-    kell: JSON.parse(localStorage.getItem('lutra_kell') || '[]')
+    kell: ensureArray(JSON.parse(localStorage.getItem('lutra_kell') || '[]'))
   };
   let allUsersData = [];
   let currentFilter = 'all';
   let matchFilter = 'all';
 
   // =========================================================================
-  // 2. VALÓS KÉTOLDALAS ALBUM STRUKTÚRA (BAL / JOBB OLDALAK)
+  // 2. VALÓS KÉTOLDALAS ALBUM STRUKTÚRA
   // =========================================================================
   const ALBUM_OLDALPAROK = [
     {
@@ -995,14 +1011,18 @@
   // 3. AUTH & PROFIL SZINKRON
   // =========================================================================
   function listenToAllUsers() {
-    db.collection("users").onSnapshot((snapshot) => {
-      allUsersData = [];
-      snapshot.forEach(doc => {
-        allUsersData.push({ id: doc.id, ...doc.data() });
+    try {
+      db.collection("users").onSnapshot((snapshot) => {
+        allUsersData = [];
+        snapshot.forEach(doc => {
+          allUsersData.push({ id: doc.id, ...doc.data() });
+        });
+        renderMatches();
+        renderStatistics();
       });
-      renderMatches();
-      renderStatistics();
-    });
+    } catch (err) {
+      console.warn("Snapshot figyelés hiba:", err);
+    }
   }
 
   auth.onAuthStateChanged(async (user) => {
@@ -1020,7 +1040,11 @@
       `;
       document.getElementById('btn-logout').onclick = () => auth.signOut();
       closeAuthModal();
-      await loadAndMergeUserData(user);
+      try {
+        await loadAndMergeUserData(user);
+      } catch (e) {
+        console.warn("Profil szinkron hiba:", e);
+      }
     } else {
       guestNotice.style.display = 'flex';
       authArea.innerHTML = `<button class="btn" id="btn-open-auth">Belépés / Fiók</button>`;
@@ -1082,9 +1106,9 @@
 
     if (doc.exists) {
       const cloudData = doc.data();
-      const mergedVan = Array.from(new Set([...myProfile.van, ...(cloudData.van || [])]));
-      const mergedKell = Array.from(new Set([...myProfile.kell, ...(cloudData.kell || [])]));
-      const mergedCounts = { ...(cloudData.vanCounts || {}), ...myProfile.vanCounts };
+      const mergedVan = Array.from(new Set([...ensureArray(myProfile.van), ...ensureArray(cloudData.van)]));
+      const mergedKell = Array.from(new Set([...ensureArray(myProfile.kell), ...ensureArray(cloudData.kell)]));
+      const mergedCounts = { ...(cloudData.vanCounts || {}), ...(myProfile.vanCounts || {}) };
 
       myProfile = { ...cloudData, van: mergedVan, kell: mergedKell, vanCounts: mergedCounts };
       await docRef.update({
@@ -1143,26 +1167,51 @@
     }
 
     saveMyState();
-    checkAlbumCompletion();
   }
 
   function showQtyPopover(num, targetEl) {
     activePopoverNum = num;
-    const currentQty = myProfile.vanCounts[num] || 1;
+    const currentQty = (myProfile.vanCounts && myProfile.vanCounts[num]) ? myProfile.vanCounts[num] : 1;
     
     document.querySelectorAll('.qty-pop-btn').forEach(btn => {
       const q = parseInt(btn.dataset.qty, 10);
       btn.classList.toggle('active', q === currentQty);
     });
 
-    const rect = targetEl.getBoundingClientRect();
-    popover.style.left = `${rect.left + rect.width / 2}px`;
-    popover.style.top = `${rect.top}px`;
+    popover.style.display = 'flex';
+    popover.style.visibility = 'hidden';
     popover.classList.add('open');
+
+    const rect = targetEl.getBoundingClientRect();
+    const popRect = popover.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+
+    let left = rect.left + rect.width / 2;
+    const halfWidth = popRect.width / 2;
+    const padding = 10;
+
+    if (left - halfWidth < padding) {
+      left = halfWidth + padding;
+    } else if (left + halfWidth > viewportWidth - padding) {
+      left = viewportWidth - halfWidth - padding;
+    }
+
+    let top = rect.top - 8;
+    let transformY = '-100%';
+    if (rect.top - popRect.height < 60) {
+      top = rect.bottom + 8;
+      transformY = '0%';
+    }
+
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+    popover.style.transform = `translate(-50%, ${transformY})`;
+    popover.style.visibility = 'visible';
   }
 
   function hideQtyPopover() {
     popover.classList.remove('open');
+    popover.style.display = 'none';
     activePopoverNum = null;
   }
 
@@ -1192,8 +1241,11 @@
   });
 
   function saveMyState() {
+    myProfile.van = ensureArray(myProfile.van);
+    myProfile.kell = ensureArray(myProfile.kell);
+    
     localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
-    localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts));
+    localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts || {}));
     localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
     
     renderGrid();
@@ -1202,10 +1254,10 @@
     if (currentUser) {
       db.collection("users").doc(currentUser.uid).set({
         van: myProfile.van,
-        vanCounts: myProfile.vanCounts,
+        vanCounts: myProfile.vanCounts || {},
         kell: myProfile.kell,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      }, { merge: true }).catch(e => console.warn("Mentési figyelmeztetés:", e));
     }
   }
 
@@ -1306,13 +1358,14 @@ ${currentUrl}`;
   });
 
   // =========================================================================
-  // 6. RÁCSOS NÉZET
+  // 6. RÁCSOS NÉZET ÉS EGYSÉGES ESEMÉNYKEZELŐ
   // =========================================================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
+    if (!grid) return;
     let html = '';
-    const vanSet = new Set(myProfile.van);
-    const kellSet = new Set(myProfile.kell);
+    const vanSet = new Set(ensureArray(myProfile.van));
+    const kellSet = new Set(ensureArray(myProfile.kell));
 
     for (let i = 1; i <= ALBUM_SIZE; i++) {
       const isVan = vanSet.has(i);
@@ -1322,7 +1375,7 @@ ${currentUrl}`;
       if (currentFilter === 'kell' && !isKell) continue;
 
       let cls = isVan ? 'van' : isKell ? 'kell' : '';
-      const qty = myProfile.vanCounts[i] || 1;
+      const qty = (myProfile.vanCounts && myProfile.vanCounts[i]) ? myProfile.vanCounts[i] : 1;
       const qtyBadge = (isVan && qty > 1) ? `<span class="qty-badge">×${qty}</span>` : '';
       const animalName = STICKER_NAMES[i] || `Matrica #${i}`;
 
@@ -1339,22 +1392,24 @@ ${currentUrl}`;
   let longPressTimer = null;
   let isLongPressTriggered = false;
 
-  function setupLongPressListeners(container) {
+  function attachStickerInteraction(container) {
+    if (!container) return;
+
     container.addEventListener('contextmenu', (e) => {
-      const cell = e.target.closest('[data-num]');
-      if (cell) {
+      const target = e.target.closest('[data-num]');
+      if (target) {
         e.preventDefault();
-        showQtyPopover(parseInt(cell.dataset.num, 10), cell);
+        showQtyPopover(parseInt(target.dataset.num, 10), target);
       }
     });
 
     container.addEventListener('touchstart', (e) => {
-      const cell = e.target.closest('[data-num]');
-      if (!cell) return;
+      const target = e.target.closest('[data-num]');
+      if (!target) return;
       isLongPressTriggered = false;
       longPressTimer = setTimeout(() => {
         isLongPressTriggered = true;
-        showQtyPopover(parseInt(cell.dataset.num, 10), cell);
+        showQtyPopover(parseInt(target.dataset.num, 10), target);
       }, 450);
     }, { passive: true });
 
@@ -1366,12 +1421,14 @@ ${currentUrl}`;
         isLongPressTriggered = false;
         return;
       }
-      const cell = e.target.closest('[data-num]');
-      if (cell) toggleStickerState(parseInt(cell.dataset.num, 10));
+      const target = e.target.closest('[data-num]');
+      if (target) {
+        toggleStickerState(parseInt(target.dataset.num, 10));
+      }
     });
   }
 
-  setupLongPressListeners(document.getElementById('matrica-grid'));
+  attachStickerInteraction(document.getElementById('matrica-grid'));
 
   // =========================================================================
   // 7. VALÓS KÉTOLDALAS ALBUM NÉZET
@@ -1387,14 +1444,18 @@ ${currentUrl}`;
   });
 
   function renderAlbumSpread() {
+    const container = document.getElementById('album-spread-content');
+    if (!container) return;
+
     const spread = ALBUM_OLDALPAROK[currentSpreadIdx];
+    if (!spread) return;
     albumSelect.value = currentSpreadIdx;
 
     document.getElementById('btn-album-prev').disabled = currentSpreadIdx === 0;
     document.getElementById('btn-album-next').disabled = currentSpreadIdx === ALBUM_OLDALPAROK.length - 1;
 
-    const vanSet = new Set(myProfile.van);
-    const kellSet = new Set(myProfile.kell);
+    const vanSet = new Set(ensureArray(myProfile.van));
+    const kellSet = new Set(ensureArray(myProfile.kell));
 
     let totalInSpread = 0;
     let markedInSpread = 0;
@@ -1427,8 +1488,8 @@ ${currentUrl}`;
                     const [n1, n2] = el.nums;
                     const isVan1 = vanSet.has(n1), isKell1 = kellSet.has(n1);
                     const isVan2 = vanSet.has(n2), isKell2 = kellSet.has(n2);
-                    const q1 = myProfile.vanCounts[n1] || 1;
-                    const q2 = myProfile.vanCounts[n2] || 1;
+                    const q1 = (myProfile.vanCounts && myProfile.vanCounts[n1]) ? myProfile.vanCounts[n1] : 1;
+                    const q2 = (myProfile.vanCounts && myProfile.vanCounts[n2]) ? myProfile.vanCounts[n2] : 1;
                     return `
                       <div class="combo-wrapper">
                         <div class="combo-title">${el.name}</div>
@@ -1449,7 +1510,7 @@ ${currentUrl}`;
                   } else {
                     const isVan = vanSet.has(el.num);
                     const isKell = kellSet.has(el.num);
-                    const q = myProfile.vanCounts[el.num] || 1;
+                    const q = (myProfile.vanCounts && myProfile.vanCounts[el.num]) ? myProfile.vanCounts[el.num] : 1;
                     let cls = isVan ? 'van' : isKell ? 'kell' : '';
                     let tag = isVan ? 'Dupla' : isKell ? 'Hiányzik' : 'Üres';
                     return `
@@ -1472,7 +1533,7 @@ ${currentUrl}`;
     const leftHtml = renderPageHalf(spread.leftPage, "Bal oldal");
     const rightHtml = renderPageHalf(spread.rightPage, "Jobb oldal");
 
-    document.getElementById('album-spread-content').innerHTML = `
+    container.innerHTML = `
       <div class="spread-main-head">
         <h3 class="spread-main-title">${spread.foCim}</h3>
         <span class="spread-progress">${markedInSpread} / ${totalInSpread} bejelölve</span>
@@ -1484,7 +1545,7 @@ ${currentUrl}`;
     `;
   }
 
-  setupLongPressListeners(document.getElementById('album-spread-content'));
+  attachStickerInteraction(document.getElementById('album-spread-content'));
 
   document.getElementById('btn-album-prev').addEventListener('click', () => {
     if (currentSpreadIdx > 0) { currentSpreadIdx--; renderAlbumSpread(); }
@@ -1513,6 +1574,15 @@ ${currentUrl}`;
     renderAlbumSpread();
   });
 
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderGrid();
+    });
+  });
+
   // =========================================================================
   // 8. PÁROSÍTÁSOK
   // =========================================================================
@@ -1537,15 +1607,15 @@ ${currentUrl}`;
 
   function renderMatches() {
     const list = document.getElementById('matches-list');
-    const myVanSet = new Set(myProfile.van);
-    const myKellSet = new Set(myProfile.kell);
+    const myVanSet = new Set(ensureArray(myProfile.van));
+    const myKellSet = new Set(ensureArray(myProfile.kell));
     const myCity = (myProfile.telepules || '').trim().toLowerCase();
 
     let matches = allUsersData
       .filter(u => u.id !== (currentUser ? currentUser.uid : 'me'))
       .map(u => {
-        const uKellSet = new Set(u.kell || []);
-        const uVanSet = new Set(u.van || []);
+        const uKellSet = new Set(ensureArray(u.kell));
+        const uVanSet = new Set(ensureArray(u.van));
         const give = [...myVanSet].filter(n => uKellSet.has(n));
         const get = [...uVanSet].filter(n => myKellSet.has(n));
         const score = Math.min(give.length, get.length);
@@ -1649,7 +1719,7 @@ ${currentUrl}`;
     const matches = allUsersData
       .filter(u => u.id !== (currentUser ? currentUser.uid : ''))
       .map(u => {
-        const found = (u.van || []).filter(n => targetSet.has(n));
+        const found = ensureArray(u.van).filter(n => targetSet.has(n));
         return { ...u, found };
       })
       .filter(u => u.found.length > 0)
@@ -1698,8 +1768,8 @@ ${currentUrl}`;
     }
 
     allUsersData.forEach(u => {
-      (u.kell || []).forEach(n => { if (demandCount[n] !== undefined) demandCount[n]++; });
-      (u.van || []).forEach(n => {
+      ensureArray(u.kell).forEach(n => { if (demandCount[n] !== undefined) demandCount[n]++; });
+      ensureArray(u.van).forEach(n => {
         const q = (u.vanCounts && u.vanCounts[n]) ? u.vanCounts[n] : 1;
         if (supplyCount[n] !== undefined) supplyCount[n] += q;
       });
@@ -1734,7 +1804,7 @@ ${currentUrl}`;
   }
 
   // =========================================================================
-  // 11. FOTÓBEOLVASÓ (AI VISION MODAL & VÁLASZTÁS)
+  // 11. FOTÓBEOLVASÓ (AI VISION PROXY HÍVÁS)
   // =========================================================================
   let scannerRecognizedNums = [];
 
@@ -1774,69 +1844,34 @@ ${currentUrl}`;
         ctx.drawImage(img, 0, 0, w, h);
 
         const base64Data = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-        await processScannerImageWithGemini(base64Data);
+        await processScannerImageWithProxy(base64Data);
       };
       img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
   });
 
-  async function processScannerImageWithGemini(base64Data) {
-    const apiKey = localStorage.getItem('gemini_api_key') || '';
-    const modelLadder = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash'];
-
-    const promptText = `Te egy profi matricaszám-felismerő asszisztens vagy.
-A képen kézzel írt matricaszámok láthatók egy papíron, vagy Lidl Lutra matricák hátoldalai kiterítve az asztalon.
-Feladatod:
-1. Olvasd ki az összes érvényes matricaszámot, amelyek 1 és 108 közé esnek!
-2. FIGYELEM: Ha a papíron egy szám át van húzva vonallal vagy X-szel jelölt, azt tekintsd érvénytelennek és HAGYD KI a listából!
-3. A matricák hátoldalán lévő egyéb szövegeket (pl. 1986, 41126, Modena, vonalkódok, copyright számok) HAGYD FIGYELMEN KÍVÜL! Csak a matricák vastag, valódi sorszámait olvasd le!
-4. Ha egy matricaszám többször is szerepel a képen, mindet vedd fel a listába (duplikátumok számlálása)!
-5. Válaszként KIZÁRÓLAG egy érvényes JSON formátumot adj vissza ilyen formában: {"numbers": [2, 3, 11, 13, 13, 14, 46, 77, 85, 96, 99, 99, 101, 107, 108]}`;
-
-    const payload = {
-      contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }],
-      generationConfig: { response_mime_type: "application/json" }
-    };
-
-    let successfulData = null;
-    let lastErrorMsg = null;
-
-    for (const model of modelLadder) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          successfulData = await res.json();
-          break;
-        } else {
-          const errJson = await res.json();
-          lastErrorMsg = errJson.error?.message;
-        }
-      } catch (err) { lastErrorMsg = err.message; }
-    }
-
-    document.getElementById('scanner-loader').style.display = 'none';
-
-    if (!successfulData) {
-      showToast('Hiba: ' + (lastErrorMsg || 'Sikertelen beolvasás.'));
-      return;
-    }
-
+  async function processScannerImageWithProxy(base64Data) {
     try {
-      let rawText = successfulData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(rawText);
-      scannerRecognizedNums = (parsed.numbers || []).filter(n => n >= 1 && n <= ALBUM_SIZE);
+      const res = await fetch(SCANNER_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64Data })
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json();
+        throw new Error(errJson.error || "Hiba történt a beolvasáskor.");
+      }
+
+      const data = await res.json();
+      scannerRecognizedNums = ensureArray(data.numbers);
       scannerRecognizedNums.sort((a, b) => a - b);
       renderScannerTags();
-    } catch (e) {
-      showToast("Nem sikerült értelmezni a beolvasott adatokat.");
+    } catch (err) {
+      showToast('Hiba: ' + err.message);
+    } finally {
+      document.getElementById('scanner-loader').style.display = 'none';
     }
   }
 
@@ -1925,16 +1960,8 @@ Feladatod:
   });
 
   // =========================================================================
-  // 13. OKLEVÉL & KONFETTI (KÉSZ AZ ALBUMOM)
+  // 13. OKLEVÉL & KONFETTI (KIZÁRÓLAG MEGNYITÁSKOR)
   // =========================================================================
-  function checkAlbumCompletion() {
-    if (myProfile.kell.length === 0 && myProfile.van.length > 0) {
-      if (window.confetti) {
-        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-      }
-    }
-  }
-
   document.getElementById('btn-view-certificate').addEventListener('click', () => {
     openCertificateModal();
   });
@@ -2088,7 +2115,7 @@ Feladatod:
     setTimeout(() => { t.style.display = 'none'; }, 3500);
   }
 
-  // Indítás (mindkét nézet kirajzolása)
+  // Indítás (mindkét nézet kirajzolása és eseménykezelők bekötése)
   renderGrid();
   renderAlbumSpread();
 </script>
