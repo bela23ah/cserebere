@@ -57,6 +57,10 @@
     background: rgba(216, 155, 74, 0.15); border: 1px solid var(--amber); border-radius: var(--radius-sm);
     padding: 10px 14px; font-size: 0.82rem; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
   }
+  .city-warning-banner {
+    background: rgba(232, 90, 79, 0.2); border: 1px solid #E85A4F; border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 0.84rem; margin-bottom: 16px; color: #FFC0BA; display: none;
+  }
 
   .view-tabs { display: flex; overflow-x: auto; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid rgba(243,238,223,0.1); }
   .tab {
@@ -71,7 +75,7 @@
   h2 { font-family: var(--font-display); font-size: 1.45rem; margin: 0 0 6px; }
   .view-intro { color: var(--text-muted); font-size: 0.88rem; margin: 0 0 14px; }
 
-  /* Módváltó & Szűrősávok */
+  /* Módváltó & Szűrők */
   .view-mode-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
   .mode-btn {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
@@ -93,7 +97,7 @@
   .stat-kell strong { color: var(--fur-brown-soft); }
 
   /* 1. RÁCSOS NÉZET */
-  #matrica-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; }
+  #matrica-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; }
   .matrica-cell {
     aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.12); border-radius: var(--radius-sm);
@@ -103,6 +107,13 @@
   .matrica-cell:active { transform: scale(0.92); }
   .matrica-cell.van { background: var(--moss); color: var(--water-deep); font-weight: 700; }
   .matrica-cell.kell { background: var(--fur-brown); color: var(--text-primary); font-weight: 700; }
+
+  /* Darabszám jelvény a matricán */
+  .qty-badge {
+    position: absolute; top: -4px; right: -4px; background: var(--amber); color: var(--water-deep);
+    font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 999px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid var(--water-deep); z-index: 5; pointer-events: none;
+  }
 
   /* 2. ALBUM NÉZET */
   .book-nav {
@@ -127,7 +138,7 @@
   .slot {
     border: 2px dashed var(--slot-border); border-radius: 8px; background: rgba(13, 46, 44, 0.4);
     padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    min-height: 105px; cursor: pointer; text-align: center; user-select: none; transition: background-color 0.15s;
+    min-height: 105px; cursor: pointer; text-align: center; user-select: none; transition: background-color 0.15s; position: relative;
   }
   .slot:hover { border-color: var(--amber); }
   .slot.orient-allo { aspect-ratio: 3 / 4; }
@@ -145,7 +156,7 @@
   .combo-halves { display: flex; flex: 1; }
   .combo-half {
     flex: 1; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    cursor: pointer; min-height: 95px; text-align: center; transition: background-color 0.15s;
+    cursor: pointer; min-height: 95px; text-align: center; transition: background-color 0.15s; position: relative;
   }
   .combo-half:first-child { border-right: 1px dashed rgba(227, 213, 184, 0.3); }
 
@@ -179,11 +190,31 @@
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
     padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; width: 100%; font-family: var(--font-body);
   }
+  .input-field:required { border-color: rgba(216, 155, 74, 0.5); }
 
   .form-group { margin-bottom: 14px; }
   .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: var(--text-muted); }
   .checkbox-label { display: flex; gap: 8px; font-size: 0.82rem; color: var(--text-muted); align-items: flex-start; cursor: pointer; margin-bottom: 10px; }
   .checkbox-label input { margin-top: 3px; }
+
+  /* Tömeges doboz */
+  .batch-box {
+    background: rgba(13, 46, 44, 0.6); border: 1px dashed var(--amber); border-radius: var(--radius-md);
+    padding: 14px; margin-bottom: 16px; display: none;
+  }
+
+  /* Gyors Darabszám Buborék Popover */
+  .qty-popover {
+    position: fixed; background: var(--water-deep); border: 1.5px solid var(--amber); border-radius: 999px;
+    padding: 4px 8px; display: none; gap: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2000;
+    align-items: center; transform: translate(-50%, -120%);
+  }
+  .qty-popover.open { display: flex; }
+  .qty-pop-btn {
+    background: var(--water-mid); border: 1px solid rgba(243,238,223,0.2); color: var(--sand);
+    padding: 4px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  }
+  .qty-pop-btn.active, .qty-pop-btn:hover { background: var(--amber); color: var(--water-deep); }
 
   /* Modális ablakok */
   .modal-overlay {
@@ -212,7 +243,7 @@
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: var(--amber); color: var(--water-deep); padding: 10px 20px;
     border-radius: 999px; font-weight: 600; font-size: 0.85rem; display: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 2000; text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 3000; text-align: center;
   }
 </style>
 </head>
@@ -230,6 +261,10 @@
     <span>💡 <strong>Vendég mód:</strong> Jelölhetsz szabadon! Ha belépsz, a gyűjteményed a telefonodon és a gépeden is megmarad.</span>
   </div>
 
+  <div id="city-warning" class="city-warning-banner">
+    ⚠️ <strong>Fontos:</strong> Kérlek add meg a településedet a <strong>Profil & Beállítás</strong> fülön, hogy a cserepartnerek lássák, hol tudtok cserélni!
+  </div>
+
   <nav class="view-tabs">
     <button class="tab active" data-view="matricaim">Matricáim (108)</button>
     <button class="tab" data-view="cserek">Párosítások</button>
@@ -241,15 +276,32 @@
     <!-- 1. MATRICÁIM -->
     <section id="view-matricaim" class="view active">
       <h2>Gyűjteményem</h2>
-      <p class="view-intro">Kattintás: 1x = <strong>Zöld (Van duplám)</strong>, 2x = <strong>Barna (Hiányzik)</strong>, 3x = Üres.</p>
+      <p class="view-intro">Kattintás: 1x = <strong>Zöld (Van duplám)</strong>, 2x = <strong>Barna (Hiányzik)</strong>, 3x = Üres.<br>
+      <em>Több darabnál <strong>tartsd hosszan nyomva</strong> a matricát (PC-n jobb klikk), és válaszd ki a darabszámot!</em></p>
       
-      <!-- Nézetváltó gombok -->
-      <div class="view-mode-toggle">
-        <button class="mode-btn active" id="btn-mode-grid">🔲 Rácsos nézet</button>
-        <button class="mode-btn" id="btn-mode-album">📖 Album nézet</button>
+      <!-- Nézetváltó & Tömeges gombok -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+        <div class="view-mode-toggle" style="margin:0;">
+          <button class="mode-btn active" id="btn-mode-grid">🔲 Rácsos nézet</button>
+          <button class="mode-btn" id="btn-mode-album">📖 Album nézet</button>
+        </div>
+        <button class="btn btn-secondary" id="btn-toggle-batch" style="font-size:0.75rem; padding:5px 12px;">
+          📦 Tömeges duplikátum-bevitel
+        </button>
       </div>
 
-      <!-- RÁCSOS NÉZET KONTÉNER -->
+      <!-- TÖMEGES BEVITELI DOBOZ -->
+      <div id="batch-input-box" class="batch-box">
+        <label style="display:block; font-size:0.85rem; margin-bottom:6px; font-weight:600;">
+          Másold be a dupláid számait (pl. <code>12, 12, 12, 45, 88</code> vagy <code>12*3, 45*2, 88</code>):
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="batch-input-text" class="input-field" placeholder="12*3, 45*2, 88">
+          <button class="btn" id="btn-apply-batch">Feltöltés</button>
+        </div>
+      </div>
+
+      <!-- RÁCSOS NÉZET -->
       <div id="grid-view-container">
         <div class="grid-controls">
           <div class="filter-group">
@@ -265,7 +317,7 @@
         <div id="matrica-grid"></div>
       </div>
 
-      <!-- ALBUM NÉZET KONTÉNER -->
+      <!-- ALBUM NÉZET -->
       <div id="album-view-container" style="display:none;">
         <div class="book-nav">
           <button class="btn btn-secondary" id="btn-album-prev" style="padding:4px 10px; font-size:0.75rem;">◀ Előző</button>
@@ -321,8 +373,8 @@
           <input type="text" id="prof-nev" class="input-field" maxlength="25" placeholder="Pl. VidraPanni">
         </div>
         <div class="form-group">
-          <label for="prof-telepules">Település (személyes átadáshoz)</label>
-          <input type="text" id="prof-telepules" class="input-field" placeholder="Pl. Kecskemét">
+          <label for="prof-telepules">Település <strong style="color:var(--amber);">* (Kötelező mező)</strong></label>
+          <input type="text" id="prof-telepules" class="input-field" placeholder="Pl. Kecskemét" required>
         </div>
         <div class="form-group">
           <label for="prof-email">Kapcsolattartási e-mail</label>
@@ -351,6 +403,15 @@
       ☕ Támogatás a Donably-n
     </a>
   </footer>
+</div>
+
+<!-- GYORS DARABSZÁM BUBORÉK (POPOVER) -->
+<div id="qty-popover" class="qty-popover">
+  <button class="qty-pop-btn" data-qty="1">1×</button>
+  <button class="qty-pop-btn" data-qty="2">2×</button>
+  <button class="qty-pop-btn" data-qty="3">3×</button>
+  <button class="qty-pop-btn" data-qty="4">4×</button>
+  <button class="qty-pop-btn" data-qty="5">5+</button>
 </div>
 
 <!-- BELÉPÉS / REGISZTRÁCIÓ MODAL -->
@@ -424,206 +485,104 @@
     isGiftOffering: false,
     gdprAccepted: false,
     van: JSON.parse(localStorage.getItem('lutra_van') || '[]'),
+    vanCounts: JSON.parse(localStorage.getItem('lutra_van_counts') || '{}'),
     kell: JSON.parse(localStorage.getItem('lutra_kell') || '[]')
   };
   let allUsersData = [];
   let currentFilter = 'all';
-  let matchFilter = 'all'; // 'all' | 'city' | 'gift'
+  let matchFilter = 'all';
 
   // =========================================================================
-  // 2. VALÓS ALBUM STRUKTÚRA A FOTÓK ALAPJÁN (108 MATRICA)
+  // 2. ALBUM STRUKTÚRA & MATRICA NEVEK
   // =========================================================================
   const ALBUM_FEJEZETEK = [
-    {
-      cim: "1. oldal — Bevezető",
-      elemek: [ { type: "single", num: 1, name: "WWF Magyarország logó", orient: "allo" } ]
-    },
-    {
-      cim: "2–3. oldal — Élettel teli bolygó",
-      elemek: [
-        { type: "single", num: 2, name: "Kék bálna", orient: "fekvo" },
-        { type: "single", num: 3, name: "Jegesmedve", orient: "fekvo" },
-        { type: "single", num: 4, name: "Hópárduc", orient: "fekvo" },
-        { type: "single", num: 5, name: "Óriáspanda", orient: "fekvo" },
-        { type: "single", num: 6, name: "Kondorkeselyű", orient: "allo" },
-        { type: "single", num: 7, name: "Bogáncslepke", orient: "fekvo" },
-        { type: "single", num: 8, name: "Atlanti tokhal", orient: "allo" },
-        { type: "single", num: 9, name: "Vidra", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "4–5. oldal — Európa",
-      elemek: [
-        { type: "single", num: 10, name: "Vöröshasú unka", orient: "allo" },
-        { type: "single", num: 11, name: "Barna medve", orient: "fekvo" },
-        { type: "single", num: 12, name: "Eurázsiai hiúz", orient: "allo" },
-        { type: "single", num: 13, name: "Szürke farkas", orient: "allo" },
-        { type: "single", num: 14, name: "Kacsafarkú szender", orient: "allo" },
-        { type: "single", num: 15, name: "Törpekuvik", orient: "allo" }
-      ]
-    },
-    {
-      cim: "6–7. oldal — Afrika",
-      elemek: [
-        { type: "single", num: 16, name: "Erdei elefánt", orient: "fekvo" },
-        { type: "single", num: 17, name: "Gepárd", orient: "fekvo" },
-        { type: "single", num: 18, name: "Fehérhátú keselyű", orient: "fekvo" },
-        { type: "single", num: 19, name: "Közönséges cserepesteknős", orient: "fekvo" },
-        { type: "single", num: 20, name: "Nyugati gorilla", orient: "allo" },
-        { type: "single", num: 21, name: "Szélesszájú orrszarvú", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "8–9. oldal — Észak-Amerika",
-      elemek: [
-        { type: "single", num: 22, name: "Amerikai bölény", orient: "fekvo" },
-        { type: "single", num: 23, name: "Fehérfejű rétisas", orient: "fekvo" },
-        { type: "single", num: 24, name: "Kaliforniai disznódelfin", orient: "fekvo" },
-        { type: "single", num: 25, name: "Vörhenyes kolibri", orient: "fekvo" },
-        { type: "single", num: 26, name: "Királylazac", orient: "fekvo" },
-        { type: "single", num: 27, name: "Pompás királylepke", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "10–11. oldal — Dél-Amerika",
-      elemek: [
-        { type: "single", num: 28, name: "Jaguár", orient: "fekvo" },
-        { type: "single", num: 29, name: "Kutyafejű boa", orient: "fekvo" },
-        { type: "single", num: 30, name: "Arany oroszlánmajom", orient: "fekvo" },
-        { type: "single", num: 31, name: "Nagy jácintara", orient: "fekvo" },
-        { type: "single", num: 32, name: "Sakáre-kajmán", orient: "fekvo" },
-        { type: "single", num: 33, name: "Amazonasi folyamidelfin", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "12–13. oldal — Ázsia",
-      elemek: [
-        { type: "single", num: 34, name: "Mongol szajga", orient: "fekvo" },
-        { type: "combo", nums: [35, 36], name: "Tigris (2 részes panorámakép)" },
-        { type: "single", num: 37, name: "Borneói orangután", orient: "allo" },
-        { type: "single", num: 38, name: "Mandzsu daru", orient: "allo" },
-        { type: "single", num: 39, name: "Komodói sárkány", orient: "fekvo" },
-        { type: "single", num: 40, name: "Aranyarcú gibbon", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "14–15. oldal — Ausztrália és Óceánia",
-      elemek: [
-        { type: "single", num: 41, name: "Keleti szürke óriáskenguru", orient: "allo" },
-        { type: "single", num: 42, name: "Tasman vombat", orient: "fekvo" },
-        { type: "single", num: 43, name: "Koala", orient: "fekvo" },
-        { type: "single", num: 44, name: "Kakapó", orient: "allo" },
-        { type: "single", num: 45, name: "Kacsacsőrű emlős", orient: "fekvo" },
-        { type: "single", num: 46, name: "Barna kivi", orient: "allo" }
-      ]
-    },
-    {
-      cim: "16–17. oldal — Antarktisz",
-      elemek: [
-        { type: "single", num: 47, name: "Leopárdfóka", orient: "fekvo" },
-        { type: "single", num: 48, name: "Weddell-fóka", orient: "fekvo" },
-        { type: "single", num: 49, name: "Császárpingvin", orient: "allo" },
-        { type: "combo", nums: [50, 51], name: "Adélie-pingvin (2 részes)" },
-        { type: "single", num: 52, name: "Galambhojsza", orient: "allo" },
-        { type: "single", num: 53, name: "Antarktiszi krill", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "18–19. oldal — Tengerek és óceánok",
-      elemek: [
-        { type: "single", num: 54, name: "Hosszúszárnyú bálna", orient: "fekvo" },
-        { type: "combo", nums: [55, 56], name: "Kardszárnyú delfin (2 részes)" },
-        { type: "single", num: 57, name: "Óriáscápa", orient: "allo" },
-        { type: "single", num: 58, name: "Kúpos fóka", orient: "allo" },
-        { type: "single", num: 59, name: "Parti lile", orient: "allo" },
-        { type: "single", num: 60, name: "Barna delfin", orient: "allo" }
-      ]
-    },
-    {
-      cim: "20–21. oldal — Kihalt állatok",
-      elemek: [
-        { type: "single", num: 61, name: "Dodó", orient: "allo" },
-        { type: "single", num: 62, name: "Vékonycsőrű póling", orient: "allo" },
-        { type: "single", num: 63, name: "Erszényesfarkas", orient: "fekvo" },
-        { type: "single", num: 64, name: "Tarpán", orient: "fekvo" },
-        { type: "single", num: 65, name: "Vándorgalamb", orient: "allo" },
-        { type: "single", num: 66, name: "Őstulok", orient: "fekvo" },
-        { type: "single", num: 67, name: "Elefántmadár", orient: "allo" },
-        { type: "single", num: 68, name: "Korallszirti patkány", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "22–23. oldal — Veszélyeztetett fajok",
-      elemek: [
-        { type: "single", num: 69, name: "Jávai orrszarvú", orient: "fekvo" },
-        { type: "single", num: 70, name: "Mezei hörcsög", orient: "fekvo" },
-        { type: "single", num: 71, name: "Röviduszonyú makócápa", orient: "fekvo" },
-        { type: "single", num: 72, name: "Európai angolna", orient: "fekvo" },
-        { type: "single", num: 73, name: "Spix-ara", orient: "allo" },
-        { type: "single", num: 74, name: "Vastagfarkú oposszum", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "24–25. oldal — Megmentett állatok",
-      elemek: [
-        { type: "single", num: 75, name: "Arab bejza", orient: "fekvo" },
-        { type: "single", num: 76, name: "Fehérfarkú gnú", orient: "fekvo" },
-        { type: "single", num: 77, name: "Európai bölény", orient: "fekvo" },
-        { type: "single", num: 78, name: "Nagy szikibagoly", orient: "allo" },
-        { type: "single", num: 79, name: "Vörös kánya", orient: "allo" },
-        { type: "single", num: 80, name: "Mallorcai korongnyelvű béka", orient: "allo" }
-      ]
-    },
-    {
-      cim: "26–27. oldal — Mi fenyegeti a természetet?",
-      elemek: [
-        { type: "single", num: 81, name: "Élőhelyek elvesztése", orient: "fekvo" },
-        { type: "single", num: 82, name: "Élelmiszeripar hatásai", orient: "allo" },
-        { type: "single", num: 83, name: "Szennyezés", orient: "fekvo" },
-        { type: "combo", nums: [84, 85], name: "Túlzott kizsákmányolás (2 részes)" },
-        { type: "single", num: 86, name: "Túlhalászás", orient: "fekvo" },
-        { type: "single", num: 87, name: "Műanyaghulladék", orient: "fekvo" },
-        { type: "single", num: 88, name: "Folyószabályozás", orient: "fekvo" },
-        { type: "single", num: 89, name: "Erőforrások túlhasználata", orient: "fekvo" },
-        { type: "single", num: 90, name: "Éghajlatváltozás", orient: "fekvo" },
-        { type: "single", num: 91, name: "Inváziós fajok", orient: "allo" }
-      ]
-    },
-    {
-      cim: "28–29. oldal — Bolygóbarát megoldások",
-      elemek: [
-        { type: "single", num: 92, name: "Védett területek", orient: "fekvo" },
-        { type: "single", num: 93, name: "Élelmiszerrendszer", orient: "fekvo" },
-        { type: "single", num: 94, name: "Megújuló energia", orient: "fekvo" },
-        { type: "single", num: 95, name: "Természetalapú megoldások", orient: "fekvo" },
+    { cim: "1. oldal — Bevezető", elemek: [ { type: "single", num: 1, name: "WWF Magyarország logó", orient: "allo" } ] },
+    { cim: "2–3. oldal — Élettel teli bolygó", elemek: [
+        { type: "single", num: 2, name: "Kék bálna", orient: "fekvo" }, { type: "single", num: 3, name: "Jegesmedve", orient: "fekvo" },
+        { type: "single", num: 4, name: "Hópárduc", orient: "fekvo" }, { type: "single", num: 5, name: "Óriáspanda", orient: "fekvo" },
+        { type: "single", num: 6, name: "Kondorkeselyű", orient: "allo" }, { type: "single", num: 7, name: "Bogáncslepke", orient: "fekvo" },
+        { type: "single", num: 8, name: "Atlanti tokhal", orient: "allo" }, { type: "single", num: 9, name: "Vidra", orient: "fekvo" }
+    ]},
+    { cim: "4–5. oldal — Európa", elemek: [
+        { type: "single", num: 10, name: "Vöröshasú unka", orient: "allo" }, { type: "single", num: 11, name: "Barna medve", orient: "fekvo" },
+        { type: "single", num: 12, name: "Eurázsiai hiúz", orient: "allo" }, { type: "single", num: 13, name: "Szürke farkas", orient: "allo" },
+        { type: "single", num: 14, name: "Kacsafarkú szender", orient: "allo" }, { type: "single", num: 15, name: "Törpekuvik", orient: "allo" }
+    ]},
+    { cim: "6–7. oldal — Afrika", elemek: [
+        { type: "single", num: 16, name: "Erdei elefánt", orient: "fekvo" }, { type: "single", num: 17, name: "Gepárd", orient: "fekvo" },
+        { type: "single", num: 18, name: "Fehérhátú keselyű", orient: "fekvo" }, { type: "single", num: 19, name: "Közönséges cserepesteknős", orient: "fekvo" },
+        { type: "single", num: 20, name: "Nyugati gorilla", orient: "allo" }, { type: "single", num: 21, name: "Szélesszájú orrszarvú", orient: "fekvo" }
+    ]},
+    { cim: "8–9. oldal — Észak-Amerika", elemek: [
+        { type: "single", num: 22, name: "Amerikai bölény", orient: "fekvo" }, { type: "single", num: 23, name: "Fehérfejű rétisas", orient: "fekvo" },
+        { type: "single", num: 24, name: "Kaliforniai disznódelfin", orient: "fekvo" }, { type: "single", num: 25, name: "Vörhenyes kolibri", orient: "fekvo" },
+        { type: "single", num: 26, name: "Királylazac", orient: "fekvo" }, { type: "single", num: 27, name: "Pompás királylepke", orient: "fekvo" }
+    ]},
+    { cim: "10–11. oldal — Dél-Amerika", elemek: [
+        { type: "single", num: 28, name: "Jaguár", orient: "fekvo" }, { type: "single", num: 29, name: "Kutyafejű boa", orient: "fekvo" },
+        { type: "single", num: 30, name: "Arany oroszlánmajom", orient: "fekvo" }, { type: "single", num: 31, name: "Nagy jácintara", orient: "fekvo" },
+        { type: "single", num: 32, name: "Sakáre-kajmán", orient: "fekvo" }, { type: "single", num: 33, name: "Amazonasi folyamidelfin", orient: "fekvo" }
+    ]},
+    { cim: "12–13. oldal — Ázsia", elemek: [
+        { type: "single", num: 34, name: "Mongol szajga", orient: "fekvo" }, { type: "combo", nums: [35, 36], name: "Tigris (2 részes panorámakép)" },
+        { type: "single", num: 37, name: "Borneói orangután", orient: "allo" }, { type: "single", num: 38, name: "Mandzsu daru", orient: "allo" },
+        { type: "single", num: 39, name: "Komodói sárkány", orient: "fekvo" }, { type: "single", num: 40, name: "Aranyarcú gibbon", orient: "fekvo" }
+    ]},
+    { cim: "14–15. oldal — Ausztrália és Óceánia", elemek: [
+        { type: "single", num: 41, name: "Keleti szürke óriáskenguru", orient: "allo" }, { type: "single", num: 42, name: "Tasman vombat", orient: "fekvo" },
+        { type: "single", num: 43, name: "Koala", orient: "fekvo" }, { type: "single", num: 44, name: "Kakapó", orient: "allo" },
+        { type: "single", num: 45, name: "Kacsacsőrű emlős", orient: "fekvo" }, { type: "single", num: 46, name: "Barna kivi", orient: "allo" }
+    ]},
+    { cim: "16–17. oldal — Antarktisz", elemek: [
+        { type: "single", num: 47, name: "Leopárdfóka", orient: "fekvo" }, { type: "single", num: 48, name: "Weddell-fóka", orient: "fekvo" },
+        { type: "single", num: 49, name: "Császárpingvin", orient: "allo" }, { type: "combo", nums: [50, 51], name: "Adélie-pingvin (2 részes)" },
+        { type: "single", num: 52, name: "Galambhojsza", orient: "allo" }, { type: "single", num: 53, name: "Antarktiszi krill", orient: "fekvo" }
+    ]},
+    { cim: "18–19. oldal — Tengerek és óceánok", elemek: [
+        { type: "single", num: 54, name: "Hosszúszárnyú bálna", orient: "fekvo" }, { type: "combo", nums: [55, 56], name: "Kardszárnyú delfin (2 részes)" },
+        { type: "single", num: 57, name: "Óriáscápa", orient: "allo" }, { type: "single", num: 58, name: "Kúpos fóka", orient: "allo" },
+        { type: "single", num: 59, name: "Parti lile", orient: "allo" }, { type: "single", num: 60, name: "Barna delfin", orient: "allo" }
+    ]},
+    { cim: "20–21. oldal — Kihalt állatok", elemek: [
+        { type: "single", num: 61, name: "Dodó", orient: "allo" }, { type: "single", num: 62, name: "Vékonycsőrű póling", orient: "allo" },
+        { type: "single", num: 63, name: "Erszényesfarkas", orient: "fekvo" }, { type: "single", num: 64, name: "Tarpán", orient: "fekvo" },
+        { type: "single", num: 65, name: "Vándorgalamb", orient: "allo" }, { type: "single", num: 66, name: "Őstulok", orient: "fekvo" },
+        { type: "single", num: 67, name: "Elefántmadár", orient: "allo" }, { type: "single", num: 68, name: "Korallszirti patkány", orient: "fekvo" }
+    ]},
+    { cim: "22–23. oldal — Veszélyeztetett fajok", elemek: [
+        { type: "single", num: 69, name: "Jávai orrszarvú", orient: "fekvo" }, { type: "single", num: 70, name: "Mezei hörcsög", orient: "fekvo" },
+        { type: "single", num: 71, name: "Röviduszonyú makócápa", orient: "fekvo" }, { type: "single", num: 72, name: "Európai angolna", orient: "fekvo" },
+        { type: "single", num: 73, name: "Spix-ara", orient: "allo" }, { type: "single", num: 74, name: "Vastagfarkú oposszum", orient: "fekvo" }
+    ]},
+    { cim: "24–25. oldal — Megmentett állatok", elemek: [
+        { type: "single", num: 75, name: "Arab bejza", orient: "fekvo" }, { type: "single", num: 76, name: "Fehérfarkú gnú", orient: "fekvo" },
+        { type: "single", num: 77, name: "Európai bölény", orient: "fekvo" }, { type: "single", num: 78, name: "Nagy szikibagoly", orient: "allo" },
+        { type: "single", num: 79, name: "Vörös kánya", orient: "allo" }, { type: "single", num: 80, name: "Mallorcai béka", orient: "allo" }
+    ]},
+    { cim: "26–27. oldal — Mi fenyegeti a természetet?", elemek: [
+        { type: "single", num: 81, name: "Élőhelyek elvesztése", orient: "fekvo" }, { type: "single", num: 82, name: "Élelmiszeripar hatásai", orient: "allo" },
+        { type: "single", num: 83, name: "Szennyezés", orient: "fekvo" }, { type: "combo", nums: [84, 85], name: "Túlzott kizsákmányolás (2 részes)" },
+        { type: "single", num: 86, name: "Túlhalászás", orient: "fekvo" }, { type: "single", num: 87, name: "Műanyaghulladék", orient: "fekvo" },
+        { type: "single", num: 88, name: "Folyószabályozás", orient: "fekvo" }, { type: "single", num: 89, name: "Erőforrások túlhasználata", orient: "fekvo" },
+        { type: "single", num: 90, name: "Éghajlatváltozás", orient: "fekvo" }, { type: "single", num: 91, name: "Inváziós fajok", orient: "allo" }
+    ]},
+    { cim: "28–29. oldal — Bolygóbarát megoldások", elemek: [
+        { type: "single", num: 92, name: "Védett területek", orient: "fekvo" }, { type: "single", num: 93, name: "Élelmiszerrendszer", orient: "fekvo" },
+        { type: "single", num: 94, name: "Megújuló energia", orient: "fekvo" }, { type: "single", num: 95, name: "Természetalapú megoldások", orient: "fekvo" },
         { type: "single", num: 96, name: "Közösségi bevonás", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "30–31. oldal — WWF Magyarország",
-      elemek: [
-        { type: "single", num: 97, name: "Hazai programok", orient: "fekvo" },
-        { type: "single", num: 98, name: "Erdőprogram", orient: "fekvo" },
-        { type: "single", num: 99, name: "Vizesélőhelyek", orient: "fekvo" },
-        { type: "single", num: 100, name: "Klímaprogramok", orient: "fekvo" },
-        { type: "single", num: 101, name: "Környezeti nevelés", orient: "fekvo" },
-        { type: "single", num: 102, name: "Jelképes örökbefogadás", orient: "fekvo" }
-      ]
-    },
-    {
-      cim: "32–33. oldal — Szuperhősök & Zöld jövő a Lidlnél",
-      elemek: [
-        { type: "single", num: 103, name: "Természetmegfigyelés", orient: "allo" },
-        { type: "single", num: 104, name: "Kihívások otthon", orient: "fekvo" },
-        { type: "single", num: 105, name: "Vadon élő állatok", orient: "fekvo" },
-        { type: "single", num: 106, name: "Biotermékek", orient: "allo" },
-        { type: "single", num: 107, name: "Vadvirágos rétek", orient: "fekvo" },
-        { type: "single", num: 108, name: "Planetary Health Diet", orient: "allo" }
-      ]
-    }
+    ]},
+    { cim: "30–31. oldal — WWF Magyarország", elemek: [
+        { type: "single", num: 97, name: "Hazai programok", orient: "fekvo" }, { type: "single", num: 98, name: "Erdőprogram", orient: "fekvo" },
+        { type: "single", num: 99, name: "Vizesélőhelyek", orient: "fekvo" }, { type: "single", num: 100, name: "Klímaprogramok", orient: "fekvo" },
+        { type: "single", num: 101, name: "Környezeti nevelés", orient: "fekvo" }, { type: "single", num: 102, name: "Jelképes örökbefogadás", orient: "fekvo" }
+    ]},
+    { cim: "32–33. oldal — Szuperhősök & Zöld jövő", elemek: [
+        { type: "single", num: 103, name: "Természetmegfigyelés", orient: "allo" }, { type: "single", num: 104, name: "Kihívások otthon", orient: "fekvo" },
+        { type: "single", num: 105, name: "Vadon élő állatok", orient: "fekvo" }, { type: "single", num: 106, name: "Biotermékek", orient: "allo" },
+        { type: "single", num: 107, name: "Vadvirágos rétek", orient: "fekvo" }, { type: "single", num: 108, name: "Planetary Health Diet", orient: "allo" }
+    ]}
   ];
 
-  // Matrica Név Kereső Index
   const STICKER_NAMES = {};
   ALBUM_FEJEZETEK.forEach(f => {
     f.elemek.forEach(el => {
@@ -637,7 +596,7 @@
   });
 
   // =========================================================================
-  // 3. AUTH & PROFIL SZINKRON
+  // 3. AUTH & PROFIL (KÖTELEZŐ TELEPÜLÉSSEL)
   // =========================================================================
   function listenToAllUsers() {
     db.collection("users").onSnapshot((snapshot) => {
@@ -673,7 +632,19 @@
     renderGrid();
     renderAlbumChapter();
     listenToAllUsers();
+    checkMandatoryCity();
   });
+
+  function checkMandatoryCity() {
+    const warning = document.getElementById('city-warning');
+    if (currentUser && (!myProfile.telepules || !myProfile.telepules.trim())) {
+      warning.style.display = 'block';
+      switchTab('profil');
+      showToast("📍 Kérlek add meg a településedet a profilodban!");
+    } else {
+      warning.style.display = 'none';
+    }
+  }
 
   function openAuthModal() { document.getElementById('modal-auth').classList.add('open'); }
   function closeAuthModal() { document.getElementById('modal-auth').classList.remove('open'); }
@@ -693,7 +664,7 @@
     try {
       await auth.signInWithEmailAndPassword(email, pass);
       showToast("Sikeres belépés!");
-    } catch (err) { showToast("Sikertelen belépés!"); }
+    } catch (err) { showToast("Sikertelen belépés: Hibás adatok!"); }
   });
 
   document.getElementById('btn-email-signup').addEventListener('click', async () => {
@@ -714,11 +685,13 @@
       const cloudData = doc.data();
       const mergedVan = Array.from(new Set([...myProfile.van, ...(cloudData.van || [])]));
       const mergedKell = Array.from(new Set([...myProfile.kell, ...(cloudData.kell || [])]));
+      const mergedCounts = { ...(cloudData.vanCounts || {}), ...myProfile.vanCounts };
 
-      myProfile = { ...cloudData, van: mergedVan, kell: mergedKell };
+      myProfile = { ...cloudData, van: mergedVan, kell: mergedKell, vanCounts: mergedCounts };
       await docRef.update({
         van: mergedVan,
         kell: mergedKell,
+        vanCounts: mergedCounts,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } else {
@@ -731,12 +704,14 @@
         isGiftOffering: myProfile.isGiftOffering,
         gdprAccepted: myProfile.gdprAccepted,
         van: myProfile.van,
+        vanCounts: myProfile.vanCounts,
         kell: myProfile.kell,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
 
     localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
+    localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts));
     localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
 
     document.getElementById('prof-nev').value = myProfile.nev || '';
@@ -747,22 +722,78 @@
   }
 
   // =========================================================================
-  // 4. KÖZÖS MATRICA ÁLLAPOTMÓDOSÍTÁS (3 ÁLLAPOT)
+  // 4. MATRICA ÁLLAPOT & BUBORÉKOS DARABSZÁM VÁLASZTÓ
   // =========================================================================
+  let activePopoverNum = null;
+  const popover = document.getElementById('qty-popover');
+
   function toggleStickerState(num) {
+    hideQtyPopover();
     const vanIdx = myProfile.van.indexOf(num);
     const kellIdx = myProfile.kell.indexOf(num);
 
     if (vanIdx > -1) {
       myProfile.van.splice(vanIdx, 1);
+      delete myProfile.vanCounts[num];
       myProfile.kell.push(num);
     } else if (kellIdx > -1) {
       myProfile.kell.splice(kellIdx, 1);
     } else {
       myProfile.van.push(num);
+      myProfile.vanCounts[num] = 1;
     }
 
+    saveMyState();
+  }
+
+  function showQtyPopover(num, targetEl) {
+    activePopoverNum = num;
+    const currentQty = myProfile.vanCounts[num] || 1;
+    
+    document.querySelectorAll('.qty-pop-btn').forEach(btn => {
+      const q = parseInt(btn.dataset.qty, 10);
+      btn.classList.toggle('active', q === currentQty);
+    });
+
+    const rect = targetEl.getBoundingClientRect();
+    popover.style.left = `${rect.left + rect.width / 2}px`;
+    popover.style.top = `${rect.top}px`;
+    popover.classList.add('open');
+  }
+
+  function hideQtyPopover() {
+    popover.classList.remove('open');
+    activePopoverNum = null;
+  }
+
+  document.querySelectorAll('.qty-pop-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activePopoverNum) return;
+      const qty = parseInt(btn.dataset.qty, 10);
+      
+      if (!myProfile.van.includes(activePopoverNum)) {
+        myProfile.van.push(activePopoverNum);
+        const kIdx = myProfile.kell.indexOf(activePopoverNum);
+        if (kIdx > -1) myProfile.kell.splice(kIdx, 1);
+      }
+      
+      myProfile.vanCounts[activePopoverNum] = qty;
+      saveMyState();
+      hideQtyPopover();
+      showToast(`#${activePopoverNum} matrica: ${qty} db beállítva!`);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#qty-popover') && !e.target.closest('.matrica-cell') && !e.target.closest('.slot') && !e.target.closest('.combo-half')) {
+      hideQtyPopover();
+    }
+  });
+
+  function saveMyState() {
     localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
+    localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts));
     localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
     
     renderGrid();
@@ -771,6 +802,7 @@
     if (currentUser) {
       db.collection("users").doc(currentUser.uid).set({
         van: myProfile.van,
+        vanCounts: myProfile.vanCounts,
         kell: myProfile.kell,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
@@ -778,7 +810,54 @@
   }
 
   // =========================================================================
-  // 5. RÁCSOS NÉZET RENDERELÉSE
+  // 5. TÖMEGES DUPLIKÁTUM FELVIVŐ
+  // =========================================================================
+  document.getElementById('btn-toggle-batch').addEventListener('click', () => {
+    const box = document.getElementById('batch-input-box');
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  });
+
+  document.getElementById('btn-apply-batch').addEventListener('click', () => {
+    const raw = document.getElementById('batch-input-text').value.trim();
+    if (!raw) return showToast("Írj be matricaszámokat!");
+    
+    const tokens = raw.split(/[\s,;]+/);
+    let addedCount = 0;
+
+    tokens.forEach(t => {
+      t = t.trim();
+      if (!t) return;
+      const multMatch = t.match(/^(\d+)[*xX](\d+)$/);
+      if (multMatch) {
+        const num = parseInt(multMatch[1], 10);
+        const qty = parseInt(multMatch[2], 10);
+        if (num >= 1 && num <= ALBUM_SIZE && qty > 0) {
+          if (!myProfile.van.includes(num)) myProfile.van.push(num);
+          const kIdx = myProfile.kell.indexOf(num);
+          if (kIdx > -1) myProfile.kell.splice(kIdx, 1);
+          myProfile.vanCounts[num] = (myProfile.vanCounts[num] || 0) + qty;
+          addedCount += qty;
+        }
+      } else {
+        const num = parseInt(t, 10);
+        if (num >= 1 && num <= ALBUM_SIZE) {
+          if (!myProfile.van.includes(num)) myProfile.van.push(num);
+          const kIdx = myProfile.kell.indexOf(num);
+          if (kIdx > -1) myProfile.kell.splice(kIdx, 1);
+          myProfile.vanCounts[num] = (myProfile.vanCounts[num] || 0) + 1;
+          addedCount++;
+        }
+      }
+    });
+
+    saveMyState();
+    document.getElementById('batch-input-text').value = '';
+    document.getElementById('batch-input-box').style.display = 'none';
+    showToast(`Sikeresen felvéve ${addedCount} db duplikátum! 📦`);
+  });
+
+  // =========================================================================
+  // 6. RÁCSOS NÉZET (HOSSZAN NYOMÁS / JOBB KLIKK ESEMÉNYEK)
   // =========================================================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
@@ -794,32 +873,68 @@
       if (currentFilter === 'kell' && !isKell) continue;
 
       let cls = isVan ? 'van' : isKell ? 'kell' : '';
+      const qty = myProfile.vanCounts[i] || 1;
+      const qtyBadge = (isVan && qty > 1) ? `<span class="qty-badge">×${qty}</span>` : '';
       const animalName = STICKER_NAMES[i] || `Matrica #${i}`;
-      html += `<div class="matrica-cell ${cls}" data-num="${i}" title="${i}. ${animalName}">${i}</div>`;
+
+      html += `<div class="matrica-cell ${cls}" data-num="${i}" title="${i}. ${animalName}">
+        ${i}
+        ${qtyBadge}
+      </div>`;
     }
     grid.innerHTML = html;
     document.getElementById('count-van').textContent = myProfile.van.length;
     document.getElementById('count-kell').textContent = myProfile.kell.length;
   }
 
-  document.getElementById('matrica-grid').addEventListener('click', (e) => {
-    if (!e.target.classList.contains('matrica-cell')) return;
-    toggleStickerState(parseInt(e.target.dataset.num, 10));
-  });
+  // Érintés és Egér események (Long press & Click)
+  let longPressTimer = null;
+  let isLongPressTriggered = false;
 
-  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      renderGrid();
+  function setupLongPressListeners(container) {
+    container.addEventListener('contextmenu', (e) => {
+      const cell = e.target.closest('[data-num]');
+      if (cell) {
+        e.preventDefault();
+        const num = parseInt(cell.dataset.num, 10);
+        showQtyPopover(num, cell);
+      }
     });
-  });
+
+    container.addEventListener('touchstart', (e) => {
+      const cell = e.target.closest('[data-num]');
+      if (!cell) return;
+      isLongPressTriggered = false;
+      longPressTimer = setTimeout(() => {
+        isLongPressTriggered = true;
+        const num = parseInt(cell.dataset.num, 10);
+        showQtyPopover(num, cell);
+      }, 450);
+    }, { passive: true });
+
+    container.addEventListener('touchend', (e) => {
+      clearTimeout(longPressTimer);
+    });
+    container.addEventListener('touchmove', (e) => {
+      clearTimeout(longPressTimer);
+    });
+
+    container.addEventListener('click', (e) => {
+      if (isLongPressTriggered) {
+        isLongPressTriggered = false;
+        return;
+      }
+      const cell = e.target.closest('[data-num]');
+      if (cell) toggleStickerState(parseInt(cell.dataset.num, 10));
+    });
+  }
+
+  setupLongPressListeners(document.getElementById('matrica-grid'));
 
   // =========================================================================
-  // 6. ALBUM NÉZET RENDERELÉSE
+  // 7. ALBUM NÉZET
   // =========================================================================
-  let currentAlbumIndex = 1; // Kezdés: 2-3. oldal
+  let currentAlbumIndex = 1;
   const albumSelect = document.getElementById('album-chapter-select');
   
   ALBUM_FEJEZETEK.forEach((f, idx) => {
@@ -858,15 +973,19 @@
             const [n1, n2] = el.nums;
             const isVan1 = vanSet.has(n1), isKell1 = kellSet.has(n1);
             const isVan2 = vanSet.has(n2), isKell2 = kellSet.has(n2);
+            const q1 = myProfile.vanCounts[n1] || 1;
+            const q2 = myProfile.vanCounts[n2] || 1;
             return `
               <div class="combo-wrapper">
                 <div class="combo-title">${el.name}</div>
                 <div class="combo-halves">
                   <div class="combo-half ${isVan1 ? 'van' : isKell1 ? 'kell' : ''}" data-num="${n1}">
+                    ${(isVan1 && q1 > 1) ? `<span class="qty-badge">×${q1}</span>` : ''}
                     <span class="sticker-num">#${n1}</span>
                     <span class="sticker-tag">${isVan1 ? 'Dupla' : isKell1 ? 'Kell' : 'Bal fél'}</span>
                   </div>
                   <div class="combo-half ${isVan2 ? 'van' : isKell2 ? 'kell' : ''}" data-num="${n2}">
+                    ${(isVan2 && q2 > 1) ? `<span class="qty-badge">×${q2}</span>` : ''}
                     <span class="sticker-num">#${n2}</span>
                     <span class="sticker-tag">${isVan2 ? 'Dupla' : isKell2 ? 'Kell' : 'Jobb fél'}</span>
                   </div>
@@ -876,10 +995,12 @@
           } else {
             const isVan = vanSet.has(el.num);
             const isKell = kellSet.has(el.num);
+            const q = myProfile.vanCounts[el.num] || 1;
             let cls = isVan ? 'van' : isKell ? 'kell' : '';
             let tag = isVan ? 'Dupla' : isKell ? 'Hiányzik' : 'Üres';
             return `
               <div class="slot orient-${el.orient} ${cls}" data-num="${el.num}">
+                ${(isVan && q > 1) ? `<span class="qty-badge">×${q}</span>` : ''}
                 <span class="sticker-num">#${el.num}</span>
                 <span class="sticker-name">${el.name}</span>
                 <span class="sticker-tag">${tag}</span>
@@ -893,11 +1014,7 @@
     document.getElementById('album-chapter-content').innerHTML = html;
   }
 
-  document.getElementById('album-chapter-content').addEventListener('click', (e) => {
-    const target = e.target.closest('[data-num]');
-    if (!target) return;
-    toggleStickerState(parseInt(target.dataset.num, 10));
-  });
+  setupLongPressListeners(document.getElementById('album-chapter-content'));
 
   document.getElementById('btn-album-prev').addEventListener('click', () => {
     if (currentAlbumIndex > 0) { currentAlbumIndex--; renderAlbumChapter(); }
@@ -910,7 +1027,6 @@
     renderAlbumChapter();
   });
 
-  // Módváltás (Rács vs Album)
   document.getElementById('btn-mode-grid').addEventListener('click', () => {
     document.getElementById('btn-mode-grid').classList.add('active');
     document.getElementById('btn-mode-album').classList.remove('active');
@@ -926,19 +1042,24 @@
     renderAlbumChapter();
   });
 
-  // =========================================================================
-  // 7. PÁROSÍTÁSOK (SZŰRÉS, ARÁNY, INGYEN ELVIHETŐ)
-  // =========================================================================
-  document.getElementById('btn-match-all').addEventListener('click', function() {
-    setActiveMatchFilter(this, 'all');
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderGrid();
+    });
   });
+
+  // =========================================================================
+  // 8. PÁROSÍTÁSOK
+  // =========================================================================
+  document.getElementById('btn-match-all').addEventListener('click', function() { setActiveMatchFilter(this, 'all'); });
   document.getElementById('btn-match-city').addEventListener('click', function() {
     if (!myProfile.telepules) return showToast("Előbb add meg a településed a Profil fülön!");
     setActiveMatchFilter(this, 'city');
   });
-  document.getElementById('btn-match-gift').addEventListener('click', function() {
-    setActiveMatchFilter(this, 'gift');
-  });
+  document.getElementById('btn-match-gift').addEventListener('click', function() { setActiveMatchFilter(this, 'gift'); });
 
   function setActiveMatchFilter(btn, filterType) {
     document.querySelectorAll('#view-cserek .filter-btn').forEach(b => b.classList.remove('active'));
@@ -994,7 +1115,10 @@
           </div>
         </div>
         <p style="margin:4px 0;"><strong>Te adnád neki:</strong> ${m.give.length ? m.give.join(', ') : '<em>(Ajándékba kapod)</em>'}</p>
-        <p style="margin:4px 0;"><strong>Ő adná neked:</strong> ${m.get.join(', ')}</p>
+        <p style="margin:4px 0;"><strong>Ő adná neked:</strong> ${m.get.map(n => {
+          const qty = (m.vanCounts && m.vanCounts[n] > 1) ? ` (${m.vanCounts[n]} db van nála!)` : '';
+          return `#${n}${qty}`;
+        }).join(', ')}</p>
         <button class="btn" onclick="showContactModal('${m.email}', '${m.nev}', '${m.give.join(', ')}', '${m.get.join(', ')}', ${m.isGift})">
           Kapcsolatfelvétel
         </button>
@@ -1003,14 +1127,12 @@
   }
 
   // =========================================================================
-  // 8. OKOS KERESŐ FUNKCIÓ (Egyedi, Lista, Sáv, Összes hiányzó)
+  // 9. OKOS KERESŐ
   // =========================================================================
   function parseSearchNumbers(str) {
     str = str.trim();
     if (!str) return [];
     const results = new Set();
-    
-    // Tartomány felismerése: pl. 30-38
     const rangeMatch = str.match(/^(\d+)\s*-\s*(\d+)$/);
     if (rangeMatch) {
       const start = parseInt(rangeMatch[1], 10);
@@ -1020,13 +1142,10 @@
       }
       return Array.from(results);
     }
-
-    // Felsorolás (vessző, szóköz, pontosvessző)
     str.split(/[\s,;]+/).forEach(part => {
       const n = parseInt(part, 10);
       if (n >= 1 && n <= ALBUM_SIZE) results.add(n);
     });
-
     return Array.from(results);
   }
 
@@ -1068,7 +1187,10 @@
             <h3>${u.nev || 'Névtelen'} ${u.telepules ? `(${u.telepules})` : ''}</h3>
             ${u.isGiftOffering ? '<span class="badge-gift">🎁 Ingyen adja!</span>' : ''}
           </div>
-          <p><strong>Nála megvan (${u.found.length} db):</strong> ${u.found.map(n => `#${n} (${STICKER_NAMES[n] || ''})`).join(', ')}</p>
+          <p><strong>Nála megvan (${u.found.length} db):</strong> ${u.found.map(n => {
+            const qty = (u.vanCounts && u.vanCounts[n] > 1) ? ` (${u.vanCounts[n]} db!)` : '';
+            return `#${n} ${STICKER_NAMES[n] ? `(${STICKER_NAMES[n]})` : ''}${qty}`;
+          }).join(', ')}</p>
           <button class="btn" onclick="showDirectContactModal('${u.email}', '${u.nev}', '${u.found.join(', ')}', ${u.isGiftOffering})">
             Érdekelnek ezek a matricák
           </button>
@@ -1078,7 +1200,7 @@
   }
 
   // =========================================================================
-  // 9. KAPCSOLATFELVÉTELI MODAL
+  // 10. KAPCSOLATFELVÉTELI MODAL
   // =========================================================================
   let currentCopyEmail = '';
   let currentCopyMsg = '';
@@ -1138,15 +1260,23 @@
   });
 
   // =========================================================================
-  // 10. PROFIL MENTÉS
+  // 11. PROFIL MENTÉS (KÖTELEZŐ TELEPÜLÉS VALIDÁCIÓVAL)
   // =========================================================================
   document.getElementById('btn-save-profile').addEventListener('click', async () => {
     if (!currentUser) return showToast("Kérlek előbb lépj be a jobb felső sarokban!");
+    
+    const telepulesVal = document.getElementById('prof-telepules').value.trim();
+    if (!telepulesVal) {
+      showToast("📍 A település megadása kötelező!");
+      document.getElementById('prof-telepules').focus();
+      return;
+    }
+
     const gdpr = document.getElementById('prof-gdpr').checked;
     if (!gdpr) return showToast("A közzétételhez el kell fogadnod az adatkezelést!");
 
     myProfile.nev = document.getElementById('prof-nev').value || 'Névtelen gyűjtő';
-    myProfile.telepules = document.getElementById('prof-telepules').value || '';
+    myProfile.telepules = telepulesVal;
     myProfile.email = document.getElementById('prof-email').value || currentUser.email || '';
     myProfile.isGiftOffering = document.getElementById('prof-gift').checked;
     myProfile.gdprAccepted = true;
@@ -1159,17 +1289,25 @@
       gdprAccepted: true,
       gdprAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+
+    document.getElementById('city-warning').style.display = 'none';
     showToast("Profil adatok elmentve a felhőbe! 💾");
   });
 
-  // Fő Navigáció
+  // Tab Navigáció
+  function switchTab(viewName) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const targetTab = document.querySelector(`.tab[data-view="${viewName}"]`);
+    if (targetTab) targetTab.classList.add('active');
+    const targetView = document.getElementById('view-' + viewName);
+    if (targetView) targetView.classList.add('active');
+    if (viewName === 'cserek') renderMatches();
+  }
+
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      t.classList.add('active');
-      document.getElementById('view-' + t.dataset.view).classList.add('active');
-      if (t.dataset.view === 'cserek') renderMatches();
+      switchTab(t.dataset.view);
     });
   });
 
