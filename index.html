@@ -124,7 +124,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid var(--water-deep); z-index: 5; pointer-events: none;
   }
 
-  /* 2. ALBUM NÉZET (SZÉP ÉS ARÁNYOS TÁJOLÁSSAL) */
+  /* 2. ALBUM NÉZET (TISZTA RÁCS TÁJOLÁS JELZÉSSEL) */
   .book-nav {
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
     margin-bottom: 14px; background: var(--water-mid); padding: 8px 14px; border-radius: var(--radius-md);
@@ -145,7 +145,6 @@
   .page-title { font-family: var(--font-display); font-size: 1.3rem; margin: 0; color: var(--sand); }
   .page-progress { font-size: 0.8rem; color: var(--amber); font-weight: 600; }
 
-  /* Kártyák arányos elhelyezése */
   .slots-grid {
     display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;
   }
@@ -158,7 +157,7 @@
   }
   .slot:hover { border-color: var(--amber); transform: scale(1.03); }
   
-  /* Pontos fizikai arányok */
+  /* Arányos matricaméretek */
   .slot.orient-allo { width: 98px; height: 132px; aspect-ratio: 3 / 4; }
   .slot.orient-fekvo { width: 132px; height: 98px; aspect-ratio: 4 / 3; }
 
@@ -166,17 +165,16 @@
   .slot .sticker-name { font-size: 0.72rem; font-weight: 500; margin: 2px 0; line-height: 1.15; max-height: 2.4em; overflow: hidden; }
   .slot .sticker-tag-row { display: flex; gap: 4px; align-items: center; }
   .slot .sticker-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 999px; background: rgba(0,0,0,0.25); }
-  .slot .orient-pill { font-size: 0.58rem; color: var(--sand); opacity: 0.75; font-weight: 500; }
 
-  /* Panoráma matrica = 2 db ÁLLÓ matrica egymás mellett (200px x 132px) */
+  /* Panoráma matrica = 2 db ÁLLÓ matrica egymás mellett */
   .combo-wrapper {
     width: 200px; height: 132px; display: flex; flex-direction: column;
     border: 2px dashed var(--slot-border); border-radius: 8px; background: rgba(13, 46, 44, 0.45);
     overflow: hidden; position: relative; flex: 0 1 auto;
   }
   .combo-title {
-    background: rgba(0,0,0,0.4); font-size: 0.68rem; text-align: center; padding: 3px; font-weight: 600; color: var(--sand);
-    display: flex; justify-content: space-between; padding: 2px 8px;
+    background: rgba(0,0,0,0.4); font-size: 0.68rem; text-align: center; padding: 2px 8px;
+    font-weight: 600; color: var(--sand); display: flex; justify-content: space-between;
   }
   .combo-halves { display: flex; flex: 1; }
   .combo-half {
@@ -251,16 +249,17 @@
     background: rgba(13, 46, 44, 0.4); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.88rem;
   }
 
-  /* Gyors Darabszám Buborék Popover */
+  /* 2-soros 10x Darabszám Buborék Popover */
   .qty-popover {
-    position: fixed; background: var(--water-deep); border: 1.5px solid var(--amber); border-radius: 999px;
-    padding: 4px 6px; display: none; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2500;
+    position: fixed; background: var(--water-deep); border: 1.5px solid var(--amber); border-radius: 12px;
+    padding: 6px 8px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2500;
     align-items: center; max-width: calc(100vw - 20px);
   }
   .qty-popover.open { display: flex; }
+  .qty-row { display: flex; gap: 4px; }
   .qty-pop-btn {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.2); color: var(--sand);
-    padding: 4px 8px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
     min-width: 32px; text-align: center;
   }
   .qty-pop-btn.active, .qty-pop-btn:hover { background: var(--amber); color: var(--water-deep); }
@@ -273,7 +272,7 @@
   .modal-overlay.open { display: flex; }
   .modal-card {
     background: var(--water-deep); border: 1px solid var(--amber); border-radius: var(--radius-md);
-    padding: 22px; max-width: 480px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
+    padding: 22px; max-width: 520px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
   }
   .modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
   .copy-box { background: var(--water-mid); padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; margin: 8px 0; word-break: break-all; }
@@ -351,7 +350,7 @@
         </div>
       </div>
       <p class="view-intro">Kattintás: 1x = <strong>Zöld (Van duplám)</strong>, 2x = <strong>Barna (Hiányzik)</strong>, 3x = Üres.<br>
-      <em>Több darabnál tartsd hosszan nyomva a matricát (PC-n jobb klikk) a darabszámhoz.</em></p>
+      <em>Több darabnál tartsd hosszan nyomva a matricát (PC-n jobb klikk) a darabszámhoz (1× – 10×).</em></p>
 
       <!-- Nézetváltó gombok -->
       <div style="margin-bottom:14px;">
@@ -391,7 +390,7 @@
         <div id="matrica-grid"></div>
       </div>
 
-      <!-- ALBUM NÉZET TARTALOM (TISZTA ÉS ARÁNYOS FEJEZET RÁCS) -->
+      <!-- ALBUM NÉZET TARTALOM -->
       <div id="album-view-container" style="display:none;">
         <div class="book-nav">
           <button class="btn btn-secondary" id="btn-album-prev" style="padding:4px 10px; font-size:0.75rem;">◀ Előző fejezet</button>
@@ -511,18 +510,27 @@
   </footer>
 </div>
 
-<!-- GYORS DARABSZÁM BUBORÉK (KÉPERNYŐSZÉL-VÉDELEMMEL) -->
+<!-- 2-SOROS 10X DARABSZÁM BUBORÉK (KÉPERNYŐSZÉL-VÉDELEMMEL) -->
 <div id="qty-popover" class="qty-popover">
-  <button class="qty-pop-btn" data-qty="1">1×</button>
-  <button class="qty-pop-btn" data-qty="2">2×</button>
-  <button class="qty-pop-btn" data-qty="3">3×</button>
-  <button class="qty-pop-btn" data-qty="4">4×</button>
-  <button class="qty-pop-btn" data-qty="5">5×</button>
+  <div class="qty-row">
+    <button class="qty-pop-btn" data-qty="1">1×</button>
+    <button class="qty-pop-btn" data-qty="2">2×</button>
+    <button class="qty-pop-btn" data-qty="3">3×</button>
+    <button class="qty-pop-btn" data-qty="4">4×</button>
+    <button class="qty-pop-btn" data-qty="5">5×</button>
+  </div>
+  <div class="qty-row">
+    <button class="qty-pop-btn" data-qty="6">6×</button>
+    <button class="qty-pop-btn" data-qty="7">7×</button>
+    <button class="qty-pop-btn" data-qty="8">8×</button>
+    <button class="qty-pop-btn" data-qty="9">9×</button>
+    <button class="qty-pop-btn" data-qty="10">10×</button>
+  </div>
 </div>
 
 <!-- FOTÓBEOLVASÓ (AI VISION MODAL) -->
 <div id="modal-scanner" class="modal-overlay">
-  <div class="modal-card" style="max-width:540px;">
+  <div class="modal-card">
     <button class="modal-close" onclick="closeScannerModal()">✕</button>
     <h3 style="margin-top:0;">📸 Fotós matrica-beolvasás</h3>
     <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 12px;">
@@ -692,11 +700,11 @@
   };
   let allUsersData = [];
   let currentFilter = 'all';
-  let matchFilter = 'all';
+  let matchFilter = 'all'; // 'all' | 'city' | 'gift' | 'loop'
   let myDocUnsubscribe = null;
 
   // =========================================================================
-  // 2. SZÉP ÉS TISZTA ALBUM FEJEZET STRUKTÚRA A HIVATALOS PDF TÁJOLÁSSAL
+  // 2. SZÉP ÉS TISZTA ALBUM FEJEZET STRUKTÚRA (108 MATRICA)
   // =========================================================================
   const FEJEZETEK = [
     {
@@ -950,13 +958,17 @@
     myDocUnsubscribe = db.collection("users").doc(uid).onSnapshot((doc) => {
       if (doc.exists) {
         const cloudData = doc.data();
+        const cleanVan = ensureArray(cloudData.van);
+        const cleanKell = ensureArray(cloudData.kell).filter(n => !cleanVan.includes(n));
+
         myProfile = {
           ...myProfile,
           ...cloudData,
-          van: ensureArray(cloudData.van),
-          kell: ensureArray(cloudData.kell),
+          van: cleanVan,
+          kell: cleanKell,
           vanCounts: cloudData.vanCounts || {}
         };
+
         localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
         localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts));
         localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
@@ -1146,7 +1158,7 @@
 
   function saveMyState() {
     myProfile.van = ensureArray(myProfile.van);
-    myProfile.kell = ensureArray(myProfile.kell);
+    myProfile.kell = ensureArray(myProfile.kell).filter(n => !myProfile.van.includes(n));
     
     localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
     localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts || {}));
@@ -1335,9 +1347,9 @@ ${currentUrl}`;
   attachStickerInteraction(document.getElementById('matrica-grid'));
 
   // =========================================================================
-  // 7. SZÉP ÉS TISZTA FEJEZET ALBUM NÉZET (PONTOS TÁJOLÁSSAL)
+  // 7. SZÉP ÉS TISZTA FEJEZET ALBUM NÉZET (ARÁNYOS TÁJOLÁSSAL)
   // =========================================================================
-  let currentChapterIndex = 1; // 2–3. oldal kezdés
+  let currentChapterIndex = 1;
   const albumSelect = document.getElementById('album-chapter-select');
   
   FEJEZETEK.forEach((f, idx) => {
@@ -1387,7 +1399,9 @@ ${currentUrl}`;
             const q2 = (myProfile.vanCounts && myProfile.vanCounts[n2]) ? myProfile.vanCounts[n2] : 1;
             return `
               <div class="combo-wrapper">
-                <div class="combo-title">${el.name}</div>
+                <div class="combo-title">
+                  <span>${el.name}</span>
+                </div>
                 <div class="combo-halves">
                   <div class="combo-half ${isVan1 ? 'van' : isKell1 ? 'kell' : ''}" data-num="${n1}">
                     ${(isVan1 && q1 > 1) ? `<span class="qty-badge">×${q1}</span>` : ''}
@@ -1464,7 +1478,7 @@ ${currentUrl}`;
   });
 
   // =========================================================================
-  // 8. PÁROSÍTÁSOK & KÖRCSERÉK
+  // 8. PÁROSÍTÁSOK & KÖRCSERÉK (SZIGORÚ DUPLIKÁCIÓ-SZŰRÉSSEL)
   // =========================================================================
   document.getElementById('btn-match-all').addEventListener('click', function() { setActiveMatchFilter(this, 'all'); });
   document.getElementById('btn-match-city').addEventListener('click', function() {
@@ -1486,7 +1500,9 @@ ${currentUrl}`;
       db.collection("users").doc(currentUser.uid).get().then(doc => {
         if (doc.exists) {
           const cloudData = doc.data();
-          myProfile = { ...myProfile, ...cloudData, van: ensureArray(cloudData.van), kell: ensureArray(cloudData.kell) };
+          const cleanVan = ensureArray(cloudData.van);
+          const cleanKell = ensureArray(cloudData.kell).filter(n => !cleanVan.includes(n));
+          myProfile = { ...myProfile, ...cloudData, van: cleanVan, kell: cleanKell };
           renderGrid();
           renderAlbumChapter();
         }
@@ -1499,28 +1515,29 @@ ${currentUrl}`;
   function computeLoopMatches() {
     const myId = currentUser ? currentUser.uid : 'me';
     const myVanSet = new Set(ensureArray(myProfile.van));
-    const myKellSet = new Set(ensureArray(myProfile.kell));
+    const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
     const myCity = (myProfile.telepules || '').trim().toLowerCase();
     const otherUsers = allUsersData.filter(u => u.id !== myId);
     const loops = [];
 
     for (let i = 0; i < otherUsers.length; i++) {
       const userB = otherUsers[i];
-      const bKellSet = new Set(ensureArray(userB.kell));
       const bVanSet = new Set(ensureArray(userB.van));
-      const giveToB = [...myVanSet].filter(n => bKellSet.has(n));
+      const bKellSet = new Set(ensureArray(userB.kell).filter(n => !bVanSet.has(n)));
+
+      const giveToB = [...myVanSet].filter(n => bKellSet.has(n) && !bVanSet.has(n));
       if (giveToB.length === 0) continue;
 
       for (let j = 0; j < otherUsers.length; j++) {
         if (i === j) continue;
         const userC = otherUsers[j];
-        const cKellSet = new Set(ensureArray(userC.kell));
         const cVanSet = new Set(ensureArray(userC.van));
+        const cKellSet = new Set(ensureArray(userC.kell).filter(n => !cVanSet.has(n)));
 
-        const giveBtoC = [...bVanSet].filter(n => cKellSet.has(n));
+        const giveBtoC = [...bVanSet].filter(n => cKellSet.has(n) && !cVanSet.has(n));
         if (giveBtoC.length === 0) continue;
 
-        const giveCtoMe = [...cVanSet].filter(n => myKellSet.has(n));
+        const giveCtoMe = [...cVanSet].filter(n => myKellSet.has(n) && !myVanSet.has(n));
         if (giveCtoMe.length === 0) continue;
 
         const isLocalLoop = (userB.telepules || '').trim().toLowerCase() === myCity && (userC.telepules || '').trim().toLowerCase() === myCity;
@@ -1533,7 +1550,8 @@ ${currentUrl}`;
   function renderMatches() {
     const list = document.getElementById('matches-list');
     const myVanSet = new Set(ensureArray(myProfile.van));
-    const myKellSet = new Set(ensureArray(myProfile.kell));
+    // Szigorú szűrés: csak az lehet valódi hiányzó, ami NINCS meg a dupláim között!
+    const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
     const myCity = (myProfile.telepules || '').trim().toLowerCase();
 
     if (matchFilter === 'loop') {
@@ -1581,10 +1599,14 @@ ${currentUrl}`;
     let matches = allUsersData
       .filter(u => u.id !== (currentUser ? currentUser.uid : 'me'))
       .map(u => {
-        const uKellSet = new Set(ensureArray(u.kell));
         const uVanSet = new Set(ensureArray(u.van));
-        const give = [...myVanSet].filter(n => uKellSet.has(n));
-        const get = [...uVanSet].filter(n => myKellSet.has(n));
+        const uKellSet = new Set(ensureArray(u.kell).filter(n => !uVanSet.has(n)));
+
+        // Csak azt adhatod neki, ami nála NINCS meg és neked dupla
+        const give = [...myVanSet].filter(n => uKellSet.has(n) && !uVanSet.has(n));
+        // Csak azt kaphatod tőle, ami nálad NINCS meg és neki dupla
+        const get = [...uVanSet].filter(n => myKellSet.has(n) && !myVanSet.has(n));
+
         const score = Math.min(give.length, get.length);
         const isSameCity = myCity && (u.telepules || '').trim().toLowerCase() === myCity;
         const isGift = u.isGiftOffering === true;
