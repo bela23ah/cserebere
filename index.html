@@ -263,7 +263,7 @@
   .modal-overlay.open { display: flex; }
   .modal-card {
     background: var(--water-deep); border: 1px solid var(--amber); border-radius: var(--radius-md);
-    padding: 22px; max-width: 460px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
+    padding: 22px; max-width: 480px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
   }
   .modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
   .copy-box { background: var(--water-mid); padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem; margin: 8px 0; word-break: break-all; }
@@ -381,7 +381,7 @@
         <div id="matrica-grid"></div>
       </div>
 
-      <!-- ALBUM NÉZET TARTALOM -->
+      <!-- ALBUM NÉZET TARTALOM (TISZTA FEJEZET RÁCS) -->
       <div id="album-view-container" style="display:none;">
         <div class="book-nav">
           <button class="btn btn-secondary" id="btn-album-prev" style="padding:4px 10px; font-size:0.75rem;">◀ Előző fejezet</button>
@@ -511,33 +511,54 @@
 
 <!-- FOTÓBEOLVASÓ (AI VISION MODAL) -->
 <div id="modal-scanner" class="modal-overlay">
-  <div class="modal-card">
+  <div class="modal-card" style="max-width:540px;">
     <button class="modal-close" onclick="closeScannerModal()">✕</button>
     <h3 style="margin-top:0;">📸 Fotós matrica-beolvasás</h3>
-    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 12px;">
-      Fotózd le a papírlistádat vagy a matricákat. Az AI automatikusan kihagyja az áthúzott számokat.
+    <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 12px;">
+      Fotózd le a papírlistádat vagy a matricákat. Az AI automatikusan felismeri a sorszámokat és kihagyja az áthúzott vagy érvénytelen számokat.
     </p>
 
-    <div style="border:2px dashed var(--amber); border-radius:var(--radius-sm); padding:18px; text-align:center; position:relative; background:rgba(13,46,44,0.4); margin-bottom:12px; cursor:pointer;">
-      <input type="file" id="scanner-file-input" accept="image/*" capture="environment" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;">
-      <strong>Kattints a fotózáshoz vagy kép kiválasztásához</strong>
+    <!-- Fotózás és Fájlfeltöltés (Galéria is választható) -->
+    <div style="border:2px dashed var(--amber); border-radius:var(--radius-sm); padding:20px; text-align:center; position:relative; background:rgba(13,46,44,0.4); margin-bottom:14px; cursor:pointer;">
+      <input type="file" id="scanner-file-input" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;">
+      <div style="font-size:1.8rem; margin-bottom:4px;">📷</div>
+      <strong>Kattints a fotózáshoz vagy kép feltöltéséhez</strong>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0;">(Választhatsz képet a galériádból is)</p>
     </div>
 
-    <div id="scanner-loader" style="display:none; text-align:center; padding:10px; font-size:0.85rem; color:var(--amber);">
-      ✨ Kép elemzése és számok kiolvasása...
+    <div id="scanner-loader" style="display:none; text-align:center; padding:12px; font-size:0.88rem; color:var(--amber); font-weight:600;">
+      ✨ Kép elemzése és számok kiolvasása folyamatban...
     </div>
 
+    <!-- Eredmények, kézi hozzáadás és célválasztó -->
     <div id="scanner-results-box" style="display:none;">
-      <div style="font-size:0.85rem; margin-bottom:6px; font-weight:600;">
-        Felismert matricák (<span id="scanner-count-label">0</span> db):
+      <div style="font-size:0.88rem; margin-bottom:6px; font-weight:600; color:var(--sand);">
+        🔍 Felismert matricák (<span id="scanner-count-label">0</span> db):
       </div>
-      <div id="scanner-tags-box" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; max-height:120px; overflow-y:auto; padding:6px; background:rgba(0,0,0,0.25); border-radius:var(--radius-sm);"></div>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 8px;">
+        Kattints a <strong>✕</strong> jelre a törléshez, ha valamit félreolvasott:
+      </p>
 
-      <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 8px;">Hová szeretnéd elmenteni a felismert számokat?</p>
-      <div style="display:flex; gap:8px;">
-        <button class="btn" id="btn-scanner-save-van" style="flex:1; font-size:0.8rem; padding:8px;">Dupláimhoz (Van)</button>
-        <button class="btn btn-secondary" id="btn-scanner-save-kell" style="flex:1; font-size:0.8rem; padding:8px;">Hiányzóimhoz (Kell)</button>
+      <div id="scanner-tags-box" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; max-height:130px; overflow-y:auto; padding:8px; background:rgba(0,0,0,0.25); border-radius:var(--radius-sm);"></div>
+
+      <!-- Kimaradt szám kézi hozzáadása -->
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input type="number" id="scanner-manual-num" class="input-field" placeholder="Kimaradt matrica száma (1-108)" min="1" max="108">
+        <button class="btn btn-secondary" id="btn-scanner-add-manual" style="width:auto; padding:8px 14px; white-space:nowrap;">+ Hozzáadás</button>
       </div>
+
+      <!-- Hová mentsük gombok -->
+      <p style="font-size:0.82rem; color:var(--sand); font-weight:600; margin:0 0 8px;">Hová szeretnéd elmenteni a felismert számokat?</p>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <button class="btn" id="btn-scanner-save-van" style="flex:1; font-size:0.85rem; padding:10px;">🟢 Dupláimhoz (Van)</button>
+        <button class="btn btn-secondary" id="btn-scanner-save-kell" style="flex:1; font-size:0.85rem; padding:10px;">🟤 Hiányzóimhoz (Kell)</button>
+      </div>
+
+      <!-- Vagy formázott másolás -->
+      <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin:6px 0;">— vagy —</div>
+      <button class="btn btn-secondary" id="btn-scanner-copy-formatted" style="width:100%; font-size:0.82rem; padding:8px;">
+        📋 Formázott lista kimásolása
+      </button>
     </div>
   </div>
 </div>
@@ -883,7 +904,6 @@
     }
   ];
 
-  // Matrica nevek indexelése a Keresőhöz
   const STICKER_NAMES = {};
   FEJEZETEK.forEach(f => {
     f.elemek.forEach(el => {
@@ -1247,7 +1267,7 @@ ${currentUrl}`;
   });
 
   // =========================================================================
-  // 6. RÁCSOS NÉZET
+  // 6. RÁCSOS NÉZET ÉS EGYSÉGES ESEMÉNYKEZELŐ
   // =========================================================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
@@ -1320,7 +1340,7 @@ ${currentUrl}`;
   attachStickerInteraction(document.getElementById('matrica-grid'));
 
   // =========================================================================
-  // 7. SZÉP ÉS TISZTA ALBUM NÉZET RENDERELÉSE
+  // 7. SZÉP ÉS TISZTA FEJEZET ALBUM NÉZET RENDERELÉSE
   // =========================================================================
   let currentChapterIndex = 1; // 2–3. oldal kezdés
   const albumSelect = document.getElementById('album-chapter-select');
@@ -1668,7 +1688,7 @@ ${currentUrl}`;
   }
 
   // =========================================================================
-  // 11. FOTÓBEOLVASÓ (AI VISION PROXY HÍVÁS)
+  // 11. FOTÓBEOLVASÓ (AI VISION PROXY HÍVÁS & KERESŐ/SZERKESZTŐ)
   // =========================================================================
   let scannerRecognizedNums = [];
 
@@ -1749,9 +1769,9 @@ ${currentUrl}`;
     }
 
     box.innerHTML = scannerRecognizedNums.map((num, idx) => `
-      <span style="background:var(--water-mid); padding:2px 8px; border-radius:999px; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px; border:1px solid var(--amber);">
+      <span style="background:var(--water-mid); padding:3px 10px; border-radius:999px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--amber);">
         #${num}
-        <span onclick="removeScannerTag(${idx})" style="cursor:pointer; color:var(--danger); font-weight:bold;">✕</span>
+        <span onclick="removeScannerTag(${idx})" style="cursor:pointer; color:var(--danger); font-weight:bold; font-size:0.8rem;">✕</span>
       </span>
     `).join('');
     document.getElementById('scanner-results-box').style.display = 'block';
@@ -1762,6 +1782,21 @@ ${currentUrl}`;
     renderScannerTags();
   };
 
+  // Kézi szám hozzáadása a beolvasóban
+  document.getElementById('btn-scanner-add-manual').addEventListener('click', () => {
+    const input = document.getElementById('scanner-manual-num');
+    const num = parseInt(input.value, 10);
+    if (num >= 1 && num <= ALBUM_SIZE) {
+      scannerRecognizedNums.push(num);
+      scannerRecognizedNums.sort((a, b) => a - b);
+      renderScannerTags();
+      input.value = '';
+    } else {
+      showToast("Adj meg egy számot 1 és 108 között!");
+    }
+  });
+
+  // Mentés a Duplákhoz
   document.getElementById('btn-scanner-save-van').addEventListener('click', () => {
     if (scannerRecognizedNums.length === 0) return showToast("Nincs menthető szám.");
     scannerRecognizedNums.forEach(num => {
@@ -1775,6 +1810,7 @@ ${currentUrl}`;
     showToast(`${scannerRecognizedNums.length} db matrica elmentve a Dupláid közé.`);
   });
 
+  // Mentés a Hiányzókhoz
   document.getElementById('btn-scanner-save-kell').addEventListener('click', () => {
     if (scannerRecognizedNums.length === 0) return showToast("Nincs menthető szám.");
     scannerRecognizedNums.forEach(num => {
@@ -1788,6 +1824,16 @@ ${currentUrl}`;
     saveMyState();
     closeScannerModal();
     showToast(`${scannerRecognizedNums.length} db matrica elmentve a Hiányzóid közé.`);
+  });
+
+  // Formázott lista másolása
+  document.getElementById('btn-scanner-copy-formatted').addEventListener('click', () => {
+    if (scannerRecognizedNums.length === 0) return showToast("Nincs felismert szám.");
+    const counts = {};
+    scannerRecognizedNums.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    const formatted = Object.entries(counts).map(([num, qty]) => qty > 1 ? `${num}*${qty}` : `${num}`).join(', ');
+    navigator.clipboard.writeText(formatted);
+    showToast("Formázott lista kimásolva a vágólapra!");
   });
 
   // =========================================================================
