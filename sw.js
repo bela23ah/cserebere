@@ -1,4 +1,3 @@
-``javascript
 const CACHE_NAME = 'lutra-csere-v1';
 const ASSETS = [
   './index.html',
