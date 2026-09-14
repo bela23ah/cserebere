@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0D2E2C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,6 +48,7 @@
   body {
     margin: 0; background: var(--water-deep); color: var(--text-primary);
     font-family: var(--font-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
   }
   .page { max-width: 760px; margin: 0 auto; padding: 18px 14px 40px; }
 
@@ -84,7 +85,6 @@
   h2 { font-family: var(--font-display); font-size: 1.45rem; margin: 0 0 6px; }
   .view-intro { color: var(--text-muted); font-size: 0.88rem; margin: 0 0 14px; }
 
-  /* Módváltó gombok */
   .view-mode-toggle { display: flex; gap: 8px; }
   .mode-btn {
     background: var(--water-mid); border: 1px solid rgba(243,238,223,0.25); color: var(--text-primary);
@@ -92,7 +92,6 @@
   }
   .mode-btn.active { background: var(--amber); color: var(--water-deep); border-color: var(--amber); font-weight: 700; }
 
-  /* Gombok és vezérlők */
   .grid-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
   .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
   .filter-btn {
@@ -106,13 +105,12 @@
   .stat-van strong { color: var(--moss-soft); }
   .stat-kell strong { color: var(--fur-brown-soft); }
 
-  /* 1. RÁCSOS NÉZET - GARANTÁLT MEGJELENÉSSEL */
+  /* 1. RÁCSOS NÉZET */
   #matrica-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
     gap: 6px;
     width: 100%;
-    min-height: 200px;
   }
   .matrica-cell {
     min-height: 44px;
@@ -128,10 +126,11 @@
     font-size: 0.85rem;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.1s, background-color 0.15s;
+    -webkit-user-select: none;
     position: relative;
+    -webkit-tap-highlight-color: transparent;
   }
-  .matrica-cell:active { transform: scale(0.92); }
+  .matrica-cell:active { transform: scale(0.94); }
   .matrica-cell.van { background: var(--moss) !important; color: var(--water-deep) !important; font-weight: 700; }
   .matrica-cell.kell { background: var(--fur-brown) !important; color: var(--text-primary) !important; font-weight: 700; }
 
@@ -162,18 +161,15 @@
   .page-title { font-family: var(--font-display); font-size: 1.3rem; margin: 0; color: var(--sand); }
   .page-progress { font-size: 0.8rem; color: var(--amber); font-weight: 600; }
 
-  .slots-grid {
-    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;
-  }
+  .slots-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; }
 
   .slot {
     border: 2px dashed var(--slot-border); border-radius: 8px; background: rgba(13, 46, 44, 0.45);
     padding: 8px 6px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    cursor: pointer; transition: transform 0.1s, background-color 0.15s; user-select: none;
-    text-align: center; position: relative; flex: 0 1 auto;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+    text-align: center; position: relative; flex: 0 1 auto; -webkit-tap-highlight-color: transparent;
   }
-  .slot:hover { border-color: var(--amber); transform: scale(1.03); }
-  
+  .slot:hover { border-color: var(--amber); }
   .slot.orient-allo { width: 98px; height: 132px; }
   .slot.orient-fekvo { width: 132px; height: 98px; }
 
@@ -193,7 +189,8 @@
   .combo-halves { display: flex; flex: 1; }
   .combo-half {
     flex: 1; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    cursor: pointer; text-align: center; transition: background-color 0.15s; position: relative;
+    cursor: pointer; text-align: center; position: relative; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .combo-half:first-child { border-right: 1px dashed rgba(227, 213, 184, 0.35); }
   .combo-half .sticker-num { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--text-muted); }
@@ -233,7 +230,6 @@
   .btn-secondary { background: transparent; border: 1px solid rgba(243,238,223,0.3); color: var(--text-primary); }
   .btn-danger { background: var(--danger); color: #FFFFFF; }
   .btn-fb { background: #1877F2; color: #FFFFFF; }
-  
   .btn-scanner-highlight {
     background: var(--amber); color: var(--water-deep); font-weight: 700;
     box-shadow: 0 3px 12px rgba(216, 155, 74, 0.35); border: 1px solid rgba(255, 255, 255, 0.2);
@@ -262,7 +258,7 @@
     background: rgba(13, 46, 44, 0.4); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.88rem;
   }
 
-  /* 2-soros Darabszám Popover */
+  /* Darabszám Popover */
   .qty-popover {
     position: fixed; background: var(--water-deep); border: 1.5px solid var(--amber); border-radius: 12px;
     padding: 6px 8px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 2500;
@@ -527,7 +523,7 @@
   </footer>
 </div>
 
-<!-- 2-SOROS DARABSZÁM POPOVER -->
+<!-- DARABSZÁM POPOVER -->
 <div id="qty-popover" class="qty-popover">
   <div class="qty-row">
     <button class="qty-pop-btn" data-qty="1">1×</button>
@@ -551,23 +547,28 @@
     <button class="modal-close" id="btn-close-scanner">✕</button>
     <h3 style="margin-top:0;">📸 Fotós matrica-beolvasás</h3>
     <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 12px;">
-      Fotózd le a papírlistádat vagy a matricákat. Az AI automatikusan felismeri a sorszámokat.
+      Fotózd le a papírlistádat vagy a matricákat. Az AI automatikusan felismeri a sorszámokat és kihagyja az áthúzott vagy érvénytelen számokat.
     </p>
 
     <div style="border:2px dashed var(--amber); border-radius:var(--radius-sm); padding:20px; text-align:center; position:relative; background:rgba(13,46,44,0.4); margin-bottom:14px; cursor:pointer;">
       <input type="file" id="scanner-file-input" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;">
       <div style="font-size:1.8rem; margin-bottom:4px;">📷</div>
       <strong>Kattints a fotózáshoz vagy kép feltöltéséhez</strong>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0;">(Választhatsz képet a galériádból is)</p>
     </div>
 
     <div id="scanner-loader" style="display:none; text-align:center; padding:12px; font-size:0.88rem; color:var(--amber); font-weight:600;">
-      ✨ Kép elemzése folyamatban...
+      ✨ Kép elemzése és számok kiolvasása folyamatban...
     </div>
 
     <div id="scanner-results-box" style="display:none;">
       <div style="font-size:0.88rem; margin-bottom:6px; font-weight:600; color:var(--sand);">
         🔍 Felismert matricák (<span id="scanner-count-label">0</span> db):
       </div>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 8px;">
+        Kattints a <strong>✕</strong> jelre a törléshez, ha valamit félreolvasott:
+      </p>
+
       <div id="scanner-tags-box" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; max-height:130px; overflow-y:auto; padding:8px; background:rgba(0,0,0,0.25); border-radius:var(--radius-sm);"></div>
 
       <div style="display:flex; gap:8px; margin-bottom:16px;">
@@ -575,10 +576,13 @@
         <button class="btn btn-secondary" id="btn-scanner-add-manual" style="width:auto; padding:8px 14px; white-space:nowrap;">+ Hozzáadás</button>
       </div>
 
+      <p style="font-size:0.82rem; color:var(--sand); font-weight:600; margin:0 0 8px;">Hová szeretnéd elmenteni a felismert számokat?</p>
       <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <button class="btn" id="btn-scanner-save-van" style="flex:1; font-size:0.85rem; padding:10px;">🟢 Duplákhoz (Van)</button>
-        <button class="btn btn-secondary" id="btn-scanner-save-kell" style="flex:1; font-size:0.85rem; padding:10px;">🟤 Hiányzókhoz (Kell)</button>
+        <button class="btn" id="btn-scanner-save-van" style="flex:1; font-size:0.85rem; padding:10px;">🟢 Dupláimhoz (Van)</button>
+        <button class="btn btn-secondary" id="btn-scanner-save-kell" style="flex:1; font-size:0.85rem; padding:10px;">🟤 Hiányzóimhoz (Kell)</button>
       </div>
+
+      <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin:6px 0;">— vagy —</div>
       <button class="btn btn-secondary" id="btn-scanner-copy-formatted" style="width:100%; font-size:0.82rem; padding:8px;">
         📋 Formázott lista másolása
       </button>
@@ -592,7 +596,7 @@
     <button class="modal-close" id="btn-close-reset">✕</button>
     <h3 style="margin-top:0;">🗑️ Gyűjtemény lenullázása</h3>
     <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 16px;">
-      Mit szeretnél törölni a tábládról?
+      Mit szeretnél törölni a tábládról? A művelet nem vonható vissza.
     </p>
     <div style="display:flex; flex-direction:column; gap:8px;">
       <button class="btn btn-secondary" id="btn-reset-van">Csak a duplák törlése (Van)</button>
@@ -622,31 +626,32 @@
   </div>
 </div>
 
-<!-- AUTH MODAL -->
+<!-- BELÉPÉS / REGISZTRÁCIÓ MODAL -->
 <div id="modal-auth" class="modal-overlay">
   <div class="modal-card">
     <button class="modal-close" id="btn-close-auth">✕</button>
     <h3 style="margin-top:0;">Belépés / Regisztráció</h3>
     <button class="btn btn-google" id="btn-google-login" style="width:100%; margin-bottom:14px;">
-      Belépés Google-lal
+      Belépés Google-lal (1 kattintás)
     </button>
     <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-bottom:14px;">— vagy e-mail címmel —</div>
+    
     <div class="form-group">
       <label>E-mail cím</label>
       <input type="email" id="auth-email" class="input-field" placeholder="pelda@freemail.hu">
     </div>
     <div class="form-group">
-      <label>Jelszó</label>
+      <label>Jelszó (min. 6 karakter)</label>
       <input type="password" id="auth-pass" class="input-field" placeholder="******">
     </div>
     <div style="display:flex; gap:8px;">
       <button class="btn" id="btn-email-login" style="flex:1;">Belépés</button>
-      <button class="btn btn-secondary" id="btn-email-signup" style="flex:1;">Regisztráció</button>
+      <button class="btn btn-secondary" id="btn-email-signup" style="flex:1;">Új Regisztráció</button>
     </div>
   </div>
 </div>
 
-<!-- KAPCSOLAT MODAL -->
+<!-- KAPCSOLATFELVÉTELI MODAL -->
 <div id="modal-contact" class="modal-overlay">
   <div class="modal-card">
     <button class="modal-close" id="btn-close-contact">✕</button>
@@ -667,7 +672,7 @@
 
 <script>
   // =========================================================================
-  // BIZTONSÁG ÉS SEGÉDFÜGGVÉNYEK
+  // 0. BIZTONSÁG ÉS SEGÉDFÜGGVÉNYEK
   // =========================================================================
   function escapeHtml(str) {
     if (!str) return '';
@@ -696,7 +701,7 @@
   }
 
   // =========================================================================
-  // STRUKTÚRA ÉS ÁLLAPOT
+  // 1. STRUKTÚRA ÉS ÁLLAPOT
   // =========================================================================
   const ALBUM_SIZE = 108;
   const SCANNER_API_URL = "https://blue-bread-cef1.gyorgy-harkai.workers.dev";
@@ -830,7 +835,7 @@
   });
 
   // =========================================================================
-  // 1. RÁCSOS NÉZET KIRAJZOLÁSA (AZONNALI FUTÁS)
+  // 2. RÁCSOS ÉS ALBUM NÉZET KIRAJZOLÁSA
   // =========================================================================
   function renderGrid() {
     const grid = document.getElementById('matrica-grid');
@@ -865,9 +870,6 @@
     if (cKell) cKell.textContent = myProfile.kell.length;
   }
 
-  // =========================================================================
-  // 2. ALBUM NÉZET KIRAJZOLÁSA (AZONNALI FUTÁS)
-  // =========================================================================
   function initAlbumSelect() {
     const sel = document.getElementById('album-chapter-select');
     if (!sel || sel.options.length > 0) return;
@@ -967,12 +969,19 @@
   }
 
   // =========================================================================
-  // 3. KATTINTÁS ÉS DARABSZÁM KEZELÉS
+  // 3. VILLÓDZÁSMENTES KATTINTÁS & DARABSZÁM (DEBOUNCED)
   // =========================================================================
   let activePopoverNum = null;
   const popover = document.getElementById('qty-popover');
+  let lastToggleTime = 0;
+  let lastToggleNum = 0;
 
   function toggleStickerState(num) {
+    const now = Date.now();
+    if (lastToggleNum === num && (now - lastToggleTime) < 300) return;
+    lastToggleTime = now;
+    lastToggleNum = num;
+
     hideQtyPopover();
     const vanIdx = myProfile.van.indexOf(num);
     const kellIdx = myProfile.kell.indexOf(num);
@@ -1034,7 +1043,7 @@
   function attachStickerInteraction(container) {
     if (!container) return;
     let longPressTimer = null;
-    let isLongPressTriggered = false;
+    let isLongPress = false;
 
     container.addEventListener('contextmenu', (e) => {
       const target = e.target.closest('[data-num]');
@@ -1047,9 +1056,9 @@
     container.addEventListener('touchstart', (e) => {
       const target = e.target.closest('[data-num]');
       if (!target) return;
-      isLongPressTriggered = false;
+      isLongPress = false;
       longPressTimer = setTimeout(() => {
-        isLongPressTriggered = true;
+        isLongPress = true;
         showQtyPopover(parseInt(target.dataset.num, 10), target);
       }, 450);
     }, { passive: true });
@@ -1058,8 +1067,8 @@
     container.addEventListener('touchmove', () => clearTimeout(longPressTimer));
 
     container.addEventListener('click', (e) => {
-      if (isLongPressTriggered) {
-        isLongPressTriggered = false;
+      if (isLongPress) {
+        isLongPress = false;
         return;
       }
       const target = e.target.closest('[data-num]');
@@ -1089,9 +1098,6 @@
     }
   }
 
-  // =========================================================================
-  // 4. VEZÉRLŐK ÉS TÖMEGES BEVITEL
-  // =========================================================================
   document.querySelectorAll('.qty-pop-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1113,6 +1119,9 @@
     if (!e.target.closest('#qty-popover') && !e.target.closest('[data-num]')) hideQtyPopover();
   });
 
+  // =========================================================================
+  // 4. TÖMEGES BEVITEL & FB POSZT
+  // =========================================================================
   on('btn-toggle-batch', 'click', () => {
     const box = document.getElementById('batch-input-box');
     if (box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
@@ -1248,7 +1257,7 @@
   });
 
   // =========================================================================
-  // 6. PÁROSÍTÁSOK ÉS KÖRCSERÉK
+  // 6. PÁROSÍTÁSOK & 3 FŐS KÖRCSERÉK
   // =========================================================================
   on('btn-match-all', 'click', function() { setActiveMatchFilter(this, 'all'); });
   on('btn-match-city', 'click', function() {
@@ -1270,6 +1279,41 @@
     showToast("Adatok frissítve.");
   });
 
+  function computeLoopMatches() {
+    const myId = currentUser ? currentUser.uid : 'me';
+    const myVanSet = new Set(ensureArray(myProfile.van));
+    const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
+    const myCity = (myProfile.telepules || '').trim().toLowerCase();
+    const otherUsers = allUsersData.filter(u => u.id !== myId);
+    const loops = [];
+
+    for (let i = 0; i < otherUsers.length; i++) {
+      const userB = otherUsers[i];
+      const bVanSet = new Set(ensureArray(userB.van));
+      const bKellSet = new Set(ensureArray(userB.kell).filter(n => !bVanSet.has(n)));
+
+      const giveToB = [...myVanSet].filter(n => bKellSet.has(n) && !bVanSet.has(n));
+      if (giveToB.length === 0) continue;
+
+      for (let j = 0; j < otherUsers.length; j++) {
+        if (i === j) continue;
+        const userC = otherUsers[j];
+        const cVanSet = new Set(ensureArray(userC.van));
+        const cKellSet = new Set(ensureArray(userC.kell).filter(n => !cVanSet.has(n)));
+
+        const giveBtoC = [...bVanSet].filter(n => cKellSet.has(n) && !cVanSet.has(n));
+        if (giveBtoC.length === 0) continue;
+
+        const giveCtoMe = [...cVanSet].filter(n => myKellSet.has(n) && !myVanSet.has(n));
+        if (giveCtoMe.length === 0) continue;
+
+        const isLocalLoop = (userB.telepules || '').trim().toLowerCase() === myCity && (userC.telepules || '').trim().toLowerCase() === myCity;
+        loops.push({ userB, userC, giveToB, giveBtoC, giveCtoMe, isLocalLoop });
+      }
+    }
+    return loops;
+  }
+
   function renderMatches() {
     const list = document.getElementById('matches-list');
     if (!list) return;
@@ -1277,6 +1321,48 @@
     const myVanSet = new Set(ensureArray(myProfile.van));
     const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
     const myCity = (myProfile.telepules || '').trim().toLowerCase();
+
+    if (matchFilter === 'loop') {
+      const loops = computeLoopMatches();
+      if (loops.length === 0) {
+        list.innerHTML = `
+          <div class="card" style="text-align:center; padding:20px;">
+            <h3 style="margin:0 0 6px;">Nincs elérhető 3 fős körcsere</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">
+              Ahogy több gyűjtő rögzíti a dupláit, a rendszer automatikusan felajánlja a 3 fős kombinációkat!
+            </p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = `
+        <div class="notice-banner" style="margin-bottom:12px;">
+          <span>🔄 <strong>Körcsere javaslat:</strong> Te adsz B-nek, B ad C-nek, C pedig ad Neked!</span>
+        </div>
+        ${loops.slice(0, 10).map((l, loopIdx) => `
+          <div class="card ${l.isLocalLoop ? 'card-local' : ''}">
+            <div class="card-header-row">
+              <h3 style="margin:0;">Körcsere: Te ➔ ${escapeHtml(l.userB.nev || 'B')} ➔ ${escapeHtml(l.userC.nev || 'C')} ➔ Te</h3>
+              ${l.isLocalLoop ? '<span class="badge-local">📍 Helyi csere</span>' : ''}
+            </div>
+            <div style="font-size:0.85rem; margin:8px 0; background:rgba(0,0,0,0.25); padding:8px; border-radius:var(--radius-sm); line-height:1.6;">
+              <p style="margin:0;">1️⃣ <strong>Te adsz neki:</strong> ${escapeHtml(l.userB.nev)} (${escapeHtml(l.userB.telepules || '')}) ➔ ${l.giveToB.map(n => `#${n}`).join(', ')}</p>
+              <p style="margin:0;">2️⃣ <strong>Ő ad tovább:</strong> ${escapeHtml(l.userB.nev)} ad ${escapeHtml(l.userC.nev)}-nek ➔ ${l.giveBtoC.map(n => `#${n}`).join(', ')}</p>
+              <p style="margin:0; color:var(--moss-soft);">3️⃣ <strong>Te kapsz tőle:</strong> ${escapeHtml(l.userC.nev)} (${escapeHtml(l.userC.telepules || '')}) ➔ ${l.giveCtoMe.map(n => `#${n}`).join(', ')}</p>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn" style="flex:1; font-size:0.8rem;" data-action="contact-loop-b" data-loop-idx="${loopIdx}">
+                Írok ${escapeHtml(l.userB.nev)}-nek
+              </button>
+              <button class="btn btn-secondary" style="flex:1; font-size:0.8rem;" data-action="contact-loop-c" data-loop-idx="${loopIdx}">
+                Írok ${escapeHtml(l.userC.nev)}-nek
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      `;
+      return;
+    }
 
     let matches = allUsersData
       .filter(u => u.id !== (currentUser ? currentUser.uid : 'me'))
@@ -1305,8 +1391,8 @@
       return;
     }
 
-    list.innerHTML = matches.map((m) => `
-      <div class="card ${m.isSameCity ? 'card-local' : ''}">
+    list.innerHTML = matches.map((m, idx) => `
+      <div class="card ${idx === 0 ? 'card-top' : ''} ${m.isSameCity ? 'card-local' : ''}">
         <div class="card-header-row">
           <div>
             <h3 style="margin:0;">${escapeHtml(m.nev || 'Névtelen')} ${m.telepules ? `(${escapeHtml(m.telepules)})` : ''}</h3>
@@ -1330,19 +1416,47 @@
   }
 
   on('matches-list', 'click', (e) => {
-    const btn = e.target.closest('[data-action="contact-match"]');
+    const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    const uid = btn.dataset.uid;
-    const targetUser = allUsersData.find(u => u.id === uid);
-    if (!targetUser) return;
-    const myVanSet = new Set(ensureArray(myProfile.van));
-    const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
-    const uVanSet = new Set(ensureArray(targetUser.van));
-    const uKellSet = new Set(ensureArray(targetUser.kell).filter(n => !uVanSet.has(n)));
-    const give = [...myVanSet].filter(n => uKellSet.has(n) && !uVanSet.has(n));
-    const get = [...uVanSet].filter(n => myKellSet.has(n) && !myVanSet.has(n));
-    showContactModal(targetUser.email, targetUser.nev, give.map(n => `#${n}`).join(', '), get.map(n => `#${n}`).join(', '), targetUser.isGiftOffering);
+    const action = btn.dataset.action;
+
+    if (action === 'contact-match') {
+      const uid = btn.dataset.uid;
+      const targetUser = allUsersData.find(u => u.id === uid);
+      if (!targetUser) return;
+      const myVanSet = new Set(ensureArray(myProfile.van));
+      const myKellSet = new Set(ensureArray(myProfile.kell).filter(n => !myVanSet.has(n)));
+      const uVanSet = new Set(ensureArray(targetUser.van));
+      const uKellSet = new Set(ensureArray(targetUser.kell).filter(n => !uVanSet.has(n)));
+      const give = [...myVanSet].filter(n => uKellSet.has(n) && !uVanSet.has(n));
+      const get = [...uVanSet].filter(n => myKellSet.has(n) && !myVanSet.has(n));
+      showContactModal(targetUser.email, targetUser.nev, give.map(n => `#${n}`).join(', '), get.map(n => `#${n}`).join(', '), targetUser.isGiftOffering);
+    } else if (action === 'contact-loop-b' || action === 'contact-loop-c') {
+      const loopIdx = parseInt(btn.dataset.loopIdx, 10);
+      const loops = computeLoopMatches();
+      const loop = loops[loopIdx];
+      if (!loop) return;
+      if (action === 'contact-loop-b') {
+        showLoopContactModal(loop.userB.email, loop.userB.nev, loop.userC.nev, loop.giveToB.map(n => `#${n}`).join(', '), 'B');
+      } else {
+        showLoopContactModal(loop.userC.email, loop.userC.nev, loop.userB.nev, loop.giveCtoMe.map(n => `#${n}`).join(', '), 'C');
+      }
+    }
   });
+
+  function showLoopContactModal(targetEmail, targetName, thirdPersonName, stickersText, role) {
+    if (!targetEmail) return showToast("Nincs érvényes e-mail cím.");
+    document.getElementById('contact-modal-title').textContent = `Körcsere: ${targetName}`;
+    document.getElementById('contact-email-text').textContent = targetEmail;
+
+    const msg = role === 'B' ?
+      `Szia ${targetName}!\n\nA Lutra 2026 oldalon egy 3 fős körcserét találtam:\n1. Én adom neked: ${stickersText}\n2. Te adsz ${thirdPersonName}-nek matricát\n3. ${thirdPersonName} pedig ad nekem.\n\nMit szólsz hozzá?` :
+      `Szia ${targetName}!\n\nA Lutra 2026 oldalon egy 3 fős körcserét találtam, amiben te tudnád nekem adni: ${stickersText}, cserébe ${thirdPersonName} adna neked matricát.\n\nÉrdekelne a csere?`;
+
+    document.getElementById('contact-msg-text').textContent = msg;
+    document.getElementById('contact-mailto-link').href = `mailto:${encodeURIComponent(targetEmail)}?subject=Lutra%20k%C3%B6rcsere&body=${encodeURIComponent(msg)}`;
+    document.getElementById('modal-contact').classList.add('open');
+  }
 
   // =========================================================================
   // 7. KERESŐ & STATISZTIKA
@@ -1357,16 +1471,24 @@
     const queryNorm = normalizeText(raw);
     const matchedNums = [];
 
-    const numTokens = raw.split(/[\s,;]+/).filter(t => /^\d+$/.test(t));
-    if (numTokens.length > 0) {
-      numTokens.forEach(n => {
-        const num = parseInt(n, 10);
-        if (num >= 1 && num <= ALBUM_SIZE) matchedNums.push(num);
-      });
+    const rangeMatch = raw.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (rangeMatch) {
+      const s = parseInt(rangeMatch[1], 10), e = parseInt(rangeMatch[2], 10);
+      for (let i = Math.min(s, e); i <= Math.max(s, e); i++) {
+        if (i >= 1 && i <= ALBUM_SIZE) matchedNums.push(i);
+      }
     } else {
-      Object.entries(STICKER_NAMES).forEach(([numStr, name]) => {
-        if (normalizeText(name).includes(queryNorm)) matchedNums.push(parseInt(numStr, 10));
-      });
+      const numTokens = raw.split(/[\s,;]+/).filter(t => /^\d+$/.test(t));
+      if (numTokens.length > 0) {
+        numTokens.forEach(n => {
+          const num = parseInt(n, 10);
+          if (num >= 1 && num <= ALBUM_SIZE) matchedNums.push(num);
+        });
+      } else {
+        Object.entries(STICKER_NAMES).forEach(([numStr, name]) => {
+          if (normalizeText(name).includes(queryNorm)) matchedNums.push(parseInt(numStr, 10));
+        });
+      }
     }
 
     if (matchedNums.length === 0) return showToast("Nincs találat.");
@@ -1374,7 +1496,7 @@
   });
 
   on('btn-search-all-missing', 'click', () => {
-    if (myProfile.kell.length === 0) return showToast("Nincs hiányzó matricád.");
+    if (myProfile.kell.length === 0) return showToast("Nincs bejelölt hiányzó matricád.");
     renderSearchResults(myProfile.kell, `Összes hiányzód (${myProfile.kell.length} db)`);
   });
 
@@ -1467,7 +1589,159 @@
   });
 
   // =========================================================================
-  // 8. MODALOK ÉS TOAST
+  // 8. FOTÓBEOLVASÓ (AI VISION PROXY)
+  // =========================================================================
+  let scannerRecognizedNums = [];
+
+  on('btn-open-scanner', 'click', () => {
+    document.getElementById('modal-scanner').classList.add('open');
+  });
+
+  function closeScannerModal() {
+    document.getElementById('modal-scanner').classList.remove('open');
+    document.getElementById('scanner-results-box').style.display = 'none';
+    document.getElementById('scanner-loader').style.display = 'none';
+  }
+
+  on('btn-close-scanner', 'click', closeScannerModal);
+
+  on('scanner-file-input', 'change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const loader = document.getElementById('scanner-loader');
+    const resultsBox = document.getElementById('scanner-results-box');
+    loader.style.display = 'block';
+    resultsBox.style.display = 'none';
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const base64Data = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        await processScannerImageWithProxy(base64Data);
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function processScannerImageWithProxy(base64Data) {
+    try {
+      const res = await fetch(SCANNER_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64Data })
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        throw new Error("A szerver nem adott érvényes választ.");
+      }
+
+      if (!res.ok) throw new Error(data.error || "Hiba történt a beolvasáskor.");
+
+      scannerRecognizedNums = ensureArray(data.numbers);
+      scannerRecognizedNums.sort((a, b) => a - b);
+      renderScannerTags();
+    } catch (err) {
+      showToast('Hiba: ' + err.message);
+    } finally {
+      document.getElementById('scanner-loader').style.display = 'none';
+    }
+  }
+
+  function renderScannerTags() {
+    document.getElementById('scanner-count-label').textContent = scannerRecognizedNums.length;
+    const box = document.getElementById('scanner-tags-box');
+    if (scannerRecognizedNums.length === 0) {
+      box.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">Nem található érvényes szám a képen.</span>';
+      document.getElementById('scanner-results-box').style.display = 'block';
+      return;
+    }
+
+    box.innerHTML = scannerRecognizedNums.map((num, idx) => `
+      <span style="background:var(--water-mid); padding:2px 8px; border-radius:999px; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px; border:1px solid var(--amber);">
+        #${num}
+        <span data-del-idx="${idx}" style="cursor:pointer; color:var(--danger); font-weight:bold;">✕</span>
+      </span>
+    `).join('');
+    document.getElementById('scanner-results-box').style.display = 'block';
+  }
+
+  on('scanner-tags-box', 'click', (e) => {
+    const delBtn = e.target.closest('[data-del-idx]');
+    if (!delBtn) return;
+    const idx = parseInt(delBtn.dataset.delIdx, 10);
+    scannerRecognizedNums.splice(idx, 1);
+    renderScannerTags();
+  });
+
+  on('btn-scanner-add-manual', 'click', () => {
+    const input = document.getElementById('scanner-manual-num');
+    const num = parseInt(input.value, 10);
+    if (num >= 1 && num <= ALBUM_SIZE) {
+      scannerRecognizedNums.push(num);
+      scannerRecognizedNums.sort((a, b) => a - b);
+      renderScannerTags();
+      input.value = '';
+    } else {
+      showToast("Adj meg egy számot 1 és 108 között!");
+    }
+  });
+
+  on('btn-scanner-save-van', 'click', () => {
+    if (scannerRecognizedNums.length === 0) return showToast("Nincs menthető szám.");
+    scannerRecognizedNums.forEach(num => {
+      if (!myProfile.van.includes(num)) myProfile.van.push(num);
+      const kIdx = myProfile.kell.indexOf(num);
+      if (kIdx > -1) myProfile.kell.splice(kIdx, 1);
+      myProfile.vanCounts[num] = (myProfile.vanCounts[num] || 0) + 1;
+    });
+    saveMyState();
+    closeScannerModal();
+    showToast(`${scannerRecognizedNums.length} db matrica mentve a Dupláid közé.`);
+  });
+
+  on('btn-scanner-save-kell', 'click', () => {
+    if (scannerRecognizedNums.length === 0) return showToast("Nincs menthető szám.");
+    scannerRecognizedNums.forEach(num => {
+      if (!myProfile.kell.includes(num)) myProfile.kell.push(num);
+      const vIdx = myProfile.van.indexOf(num);
+      if (vIdx > -1) {
+        myProfile.van.splice(vIdx, 1);
+        delete myProfile.vanCounts[num];
+      }
+    });
+    saveMyState();
+    closeScannerModal();
+    showToast(`${scannerRecognizedNums.length} db matrica mentve a Hiányzóid közé.`);
+  });
+
+  on('btn-scanner-copy-formatted', 'click', () => {
+    if (scannerRecognizedNums.length === 0) return showToast("Nincs felismert szám.");
+    const counts = {};
+    scannerRecognizedNums.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    const formatted = Object.entries(counts).map(([num, qty]) => qty > 1 ? `${num}*${qty}` : `${num}`).join(', ');
+    navigator.clipboard.writeText(formatted);
+    showToast("Formázott lista másolva!");
+  });
+
+  // =========================================================================
+  // 9. MODALOK, LENULLÁZÁS, OKLEVÉL
   // =========================================================================
   function showToast(msg) {
     const t = document.getElementById('toast');
@@ -1538,14 +1812,12 @@
     showToast("Szöveg másolva a vágólapra!");
   });
 
-  on('btn-open-scanner', 'click', () => document.getElementById('modal-scanner').classList.add('open'));
-  on('btn-close-scanner', 'click', () => document.getElementById('modal-scanner').classList.remove('open'));
   on('btn-open-auth', 'click', () => document.getElementById('modal-auth').classList.add('open'));
   on('btn-close-auth', 'click', () => document.getElementById('modal-auth').classList.remove('open'));
   on('link-open-profile', 'click', () => switchTab('profil'));
 
   // =========================================================================
-  // 9. FIREBASE ÉS SZINKRONIZÁCIÓ (BIZTONSÁGOS LEFUTÁS)
+  // 10. FIREBASE, PROFIL ÉS FIÓKTÖRLÉS
   // =========================================================================
   function initFirebase() {
     if (typeof firebase === 'undefined') return;
@@ -1576,7 +1848,10 @@
               <div class="user-badge"><span>👤 ${escapeHtml(user.displayName || user.email.split('@')[0])}</span></div>
               <button class="btn btn-secondary" id="btn-logout" style="padding:4px 10px; font-size:0.75rem;">Kilépés</button>
             `;
-            on('btn-logout', 'click', () => auth.signOut());
+            on('btn-logout', 'click', () => {
+              if (myDocUnsubscribe) myDocUnsubscribe();
+              auth.signOut();
+            });
           }
           document.getElementById('modal-auth').classList.remove('open');
           listenToMyProfile(user.uid);
@@ -1610,7 +1885,8 @@
 
   function listenToMyProfile(uid) {
     if (!db) return;
-    db.collection("users").doc(uid).onSnapshot(doc => {
+    if (myDocUnsubscribe) myDocUnsubscribe();
+    myDocUnsubscribe = db.collection("users").doc(uid).onSnapshot(doc => {
       if (doc.exists) {
         const d = doc.data();
         myProfile = {
@@ -1620,7 +1896,12 @@
           kell: ensureArray(d.kell),
           vanCounts: d.vanCounts || {}
         };
-        saveMyState();
+        localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
+        localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts || {}));
+        localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
+        renderGrid();
+        renderAlbumChapter();
+
         const nI = document.getElementById('prof-nev'); if (nI) nI.value = myProfile.nev || '';
         const tI = document.getElementById('prof-telepules'); if (tI) tI.value = myProfile.telepules || '';
         const eI = document.getElementById('prof-email'); if (eI) eI.value = myProfile.email || '';
@@ -1664,6 +1945,29 @@
     }
   });
 
+  on('btn-delete-account', 'click', async () => {
+    if (!currentUser) return showToast("Nem vagy bejelentkezve.");
+    if (!confirm("Biztosan törölni szeretnéd a fiókodat és az összes mentett adatodat?")) return;
+
+    try {
+      await db.collection("users").doc(currentUser.uid).delete();
+      myProfile = {
+        nev: "Vendég gyűjtő", telepules: "", email: "",
+        isGiftOffering: false, gdprAccepted: false, van: [], vanCounts: {}, kell: []
+      };
+      localStorage.removeItem('lutra_van');
+      localStorage.removeItem('lutra_van_counts');
+      localStorage.removeItem('lutra_kell');
+      if (myDocUnsubscribe) myDocUnsubscribe();
+      await auth.signOut();
+      renderGrid();
+      renderAlbumChapter();
+      showToast("Adataid törölve lettek.");
+    } catch (err) {
+      showToast("Hiba: " + err.message);
+    }
+  });
+
   on('btn-google-login', 'click', async () => {
     if (!auth) return;
     try {
@@ -1698,7 +2002,6 @@
   attachStickerInteraction(document.getElementById('matrica-grid'));
   attachStickerInteraction(document.getElementById('album-chapter-content'));
 
-  // Első kirajzolás azonnal, nulla késleltetéssel:
   renderGrid();
   renderAlbumChapter();
   initFirebase();
