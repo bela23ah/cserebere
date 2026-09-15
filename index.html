@@ -1089,7 +1089,7 @@
     renderAlbumChapter();
 
     if (currentUser && db) {
-      db.collection("users").doc(currentUser.uid).set({
+      db.collection("public_profiles").doc(currentUser.uid).set({
         van: myProfile.van,
         vanCounts: myProfile.vanCounts || {},
         kell: myProfile.kell,
