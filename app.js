@@ -1,12 +1,12 @@
 // =========================================================================
-// Lutra Album Cserebere (Lidl 2026) - app.js (v2.0 Teljes Rendszer)
+// Lutra Album Cserebere (Lidl 2026) - app.js (v2.3 Teljes Kód - 1. RÉSZ)
 // =========================================================================
 
 const ALBUM_SIZE = 108;
 const ADMIN_EMAIL = "gyorgy.harkai@gmail.com";
 const WORKER_ENDPOINT_URL = "https://blue-bread-cef1.gyorgy-harkai.workers.dev";
 
-// Biztonságos eseménykezelő segédfüggvény (Crash-Proof DOM handling)
+// Biztonsági eseménykezelő segédfüggvény (Crash-Proof DOM handling)
 function safeAddListener(id, event, handler) {
   const el = document.getElementById(id);
   if (el) el.addEventListener(event, handler);
@@ -117,10 +117,12 @@ let allUsersData = [];
 let myIncomingMessages = [];
 let myOutgoingMessages = [];
 let radarReports = [];
+let meetupEvents = [];
 let activeAnnouncements = [];
 let previousIncomingCount = null;
 let previousRadarCount = null;
 let radarAttachedBase64 = '';
+let meetupAttachedBase64 = '';
 
 let activeInboxTab = 'inbox';
 let currentFilter = 'all';
@@ -133,6 +135,7 @@ let myDocUnsubscribe = null;
 let allUsersUnsubscribe = null;
 let messagesUnsubscribe = null;
 let radarUnsubscribe = null;
+let meetupsUnsubscribe = null;
 let announcementsUnsubscribe = null;
 let db = null;
 let auth = null;
@@ -144,6 +147,43 @@ let activeContactTarget = {
   email: '',
   showEmail: false,
   subject: ''
+};
+
+// Város koordináták a hőtérképhez
+const CITY_COORDINATES = {
+  "budapest": { x: 49, y: 40 },
+  "győr": { x: 26, y: 32 },
+  "gyor": { x: 26, y: 32 },
+  "sopron": { x: 14, y: 32 },
+  "szombathely": { x: 15, y: 52 },
+  "zalaegerszeg": { x: 20, y: 65 },
+  "veszprém": { x: 35, y: 48 },
+  "veszprem": { x: 35, y: 48 },
+  "székesfehérvár": { x: 41, y: 46 },
+  "szekesfehervar": { x: 41, y: 46 },
+  "pécs": { x: 36, y: 82 },
+  "pecs": { x: 36, y: 82 },
+  "kaposvár": { x: 30, y: 72 },
+  "kaposvar": { x: 30, y: 72 },
+  "szekszárd": { x: 44, y: 72 },
+  "szekszard": { x: 44, y: 72 },
+  "kecskemét": { x: 55, y: 58 },
+  "kecskemet": { x: 55, y: 58 },
+  "szeged": { x: 64, y: 80 },
+  "békéscsaba": { x: 80, y: 68 },
+  "bekescsaba": { x: 80, y: 68 },
+  "szolnok": { x: 62, y: 48 },
+  "debrecen": { x: 83, y: 35 },
+  "nyíregyháza": { x: 86, y: 22 },
+  "nyiregyhaza": { x: 86, y: 22 },
+  "miskolc": { x: 70, y: 20 },
+  "eger": { x: 64, y: 28 },
+  "salgótarján": { x: 54, y: 20 },
+  "salgotarjan": { x: 54, y: 20 },
+  "tatabánya": { x: 38, y: 34 },
+  "tatabanya": { x: 38, y: 34 },
+  "érd": { x: 47, y: 43 },
+  "erd": { x: 47, y: 43 }
 };
 
 const FEJEZETEK = [
@@ -528,6 +568,7 @@ function saveMyState() {
   renderGrid();
   renderAlbumChapter();
   refreshMatchesIfVisible();
+  renderCompletionOdds();
 
   if (currentUser && myProfile.gdprAccepted === true && db) {
     db.collection("public_profiles").doc(currentUser.uid).set({
@@ -717,11 +758,20 @@ function switchTab(viewName) {
   if (targetView) targetView.classList.add('active');
 
   if (viewName === 'cserek') renderMatches();
-  if (viewName === 'statisztika') renderStatistics();
+  if (viewName === 'statisztika') {
+    renderStatistics();
+    renderCompletionOdds();
+    renderHeatmap();
+  }
   if (viewName === 'radar') {
     renderRadarReports();
     const rBadge = document.getElementById('radar-badge');
     if (rBadge) rBadge.style.display = 'none';
+  }
+  if (viewName === 'meetups') {
+    renderMeetups();
+    const mBadge = document.getElementById('meetup-badge');
+    if (mBadge) mBadge.style.display = 'none';
   }
   if (viewName === 'uzeneteim') {
     renderMessages();
@@ -754,7 +804,7 @@ function refreshMatchesIfVisible() {
 
 function setActiveMatchFilter(btn, filterType) {
   document.querySelectorAll('#view-cserek .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   matchFilter = filterType;
   renderMatches();
 }
@@ -1027,7 +1077,7 @@ safeAddListener('search-results', 'click', (e) => {
 });
 
 // =========================================================================
-// 8. ALBUMRADAR & FOTÓ TÖMÖRÍTÉS (10 PERCES KORLÁTTAL)
+// 8. ALBUMRADAR & FOTÓCSATOLÁS (10 PERCES KORLÁTTAL)
 // =========================================================================
 safeAddListener('radar-photo-input', 'change', (e) => {
   const file = e.target.files[0];
@@ -1038,7 +1088,7 @@ safeAddListener('radar-photo-input', 'change', (e) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 600; // Kis méret a gyorsaságért
+      const maxDim = 600;
       let w = img.width, h = img.height;
       if (w > maxDim || h > maxDim) {
         if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
@@ -1064,7 +1114,6 @@ safeAddListener('radar-photo-input', 'change', (e) => {
 safeAddListener('btn-submit-radar', 'click', async () => {
   if (!currentUser) return showToast("Bejelentéshez előbb lépj be a fiókodba!");
 
-  // 10 perces korlát ellenőrzése
   const lastReportTime = parseInt(localStorage.getItem('lutra_last_radar_report') || '0', 10);
   const now = Date.now();
   if (now - lastReportTime < 10 * 60 * 1000) {
@@ -1196,7 +1245,6 @@ function listenToRadarReports() {
 
       radarReports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Radar jelvény és felső értesítés ha új bejelentés érkezett
       const rBadge = document.getElementById('radar-badge');
       if (rBadge && radarReports.length > 0) {
         rBadge.textContent = radarReports.length;
@@ -1213,45 +1261,268 @@ function listenToRadarReports() {
     }, err => console.warn("Albumradar listener:", err));
 }
 
-function openUserProfileModal(uid) {
-  const targetUser = allUsersData.find(u => u.id === uid);
-  if (!targetUser) return;
+// =========================================================================
+// 9. OFFLINE TALÁLKOZÓK & CSERENAPOK MODUL
+// =========================================================================
+safeAddListener('meetup-photo-input', 'change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const nameEl = document.getElementById('user-profile-modal-name');
-  const cityEl = document.getElementById('user-profile-modal-city');
-  if (nameEl) nameEl.textContent = `Gyűjtő: ${targetUser.nev || 'Névtelen'}`;
-  if (cityEl) cityEl.textContent = targetUser.telepules ? `📍 Település: ${targetUser.telepules}` : 'Nincs megadva település';
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
 
-  const mBox = document.getElementById('user-profile-missing-tags');
-  const vBox = document.getElementById('user-profile-van-tags');
+      meetupAttachedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+      const preview = document.getElementById('meetup-photo-preview');
+      const previewBox = document.getElementById('meetup-photo-preview-box');
+      if (preview && previewBox) {
+        preview.src = meetupAttachedBase64;
+        previewBox.style.display = 'block';
+      }
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
-  if (mBox) {
-    if (targetUser.allowInspect === false) {
-      mBox.innerHTML = '<em style="color:var(--text-muted);">A gyűjtő elrejtette a hiányzóinak listáját.</em>';
-    } else if (targetUser.kell.length === 0) {
-      mBox.innerHTML = '<span style="color:var(--moss-soft);">Minden matrica megvan neki! 🎉</span>';
-    } else {
-      mBox.innerHTML = targetUser.kell.map(n => `<span style="display:inline-block; margin-right:6px;">#${n} (${escapeHtml(STICKER_NAMES[n] || '')})</span>`).join(', ');
-    }
+safeAddListener('btn-submit-meetup', 'click', async () => {
+  if (!currentUser) return showToast("Találkozó meghirdetéséhez lépj be a fiókodba!");
+
+  const lastMeetupTime = parseInt(localStorage.getItem('lutra_last_meetup_post') || '0', 10);
+  const now = Date.now();
+  if (now - lastMeetupTime < 10 * 60 * 1000) {
+    const remMin = Math.ceil((10 * 60 * 1000 - (now - lastMeetupTime)) / 60000);
+    return showToast(`Kérlek várj még ${remMin} percet az újabb találkozó kiírása előtt!`);
   }
 
-  if (vBox) {
-    if (targetUser.van.length === 0) {
-      vBox.innerHTML = '<em style="color:var(--text-muted);">Jelenleg nincs cserélhető duplája.</em>';
-    } else {
-      vBox.innerHTML = targetUser.van.map(n => {
-        const q = targetUser.vanCounts && targetUser.vanCounts[n] > 1 ? ` (${targetUser.vanCounts[n]}db)` : '';
-        return `<span style="display:inline-block; margin-right:6px;">#${n}${q}</span>`;
-      }).join(', ');
-    }
+  const city = document.getElementById('meetup-input-city')?.value.trim() || '';
+  const time = document.getElementById('meetup-input-time')?.value.trim() || '';
+  const place = document.getElementById('meetup-input-place')?.value.trim() || '';
+  const desc = document.getElementById('meetup-input-desc')?.value.trim() || '';
+
+  if (!city || !time || !place) return showToast("Kérlek töltsd ki a várost, időpontot és helyszínt!");
+
+  try {
+    await db.collection("meetups").add({
+      city,
+      time,
+      place,
+      description: desc,
+      photoBase64: meetupAttachedBase64 || '',
+      postedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      organizerName: myProfile.nev || 'Gyűjtő',
+      userId: currentUser.uid
+    });
+
+    localStorage.setItem('lutra_last_meetup_post', now.toString());
+    meetupAttachedBase64 = '';
+    if (document.getElementById('meetup-input-city')) document.getElementById('meetup-input-city').value = '';
+    if (document.getElementById('meetup-input-time')) document.getElementById('meetup-input-time').value = '';
+    if (document.getElementById('meetup-input-place')) document.getElementById('meetup-input-place').value = '';
+    if (document.getElementById('meetup-input-desc')) document.getElementById('meetup-input-desc').value = '';
+    if (document.getElementById('meetup-photo-input')) document.getElementById('meetup-photo-input').value = '';
+    if (document.getElementById('meetup-photo-preview-box')) document.getElementById('meetup-photo-preview-box').style.display = 'none';
+
+    showToast("🎉 Találkozó sikeresen közzétéve!");
+  } catch (err) {
+    showToast("Hiba: " + err.message);
+  }
+});
+
+safeAddListener('btn-refresh-meetups', 'click', () => {
+  renderMeetups();
+  showToast("Találkozók frissítve.");
+});
+
+function renderMeetups() {
+  const container = document.getElementById('meetups-list');
+  if (!container) return;
+
+  if (meetupEvents.length === 0) {
+    container.innerHTML = '<p class="view-intro">Jelenleg nincs meghirdetett közös találkozó. Hozz létre egyet!</p>';
+    return;
   }
 
-  document.getElementById('modal-user-profile')?.classList.add('open');
+  container.innerHTML = meetupEvents.map(m => {
+    const isOwnerOrAdmin = currentUser && (m.userId === currentUser.uid || currentUser.email === ADMIN_EMAIL);
+
+    return `
+      <div class="meetup-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <div>
+            <h3 style="margin:0; font-size:1.05rem;">📍 ${escapeHtml(m.city)} — ${escapeHtml(m.place)}</h3>
+          </div>
+          <span class="meetup-time-badge">🕒 ${escapeHtml(m.time)}</span>
+        </div>
+        ${m.description ? `<p style="font-size:0.86rem; margin:6px 0; color:var(--text-primary); white-space:pre-wrap;">${escapeHtml(m.description)}</p>` : ''}
+        ${m.photoBase64 ? `<img src="${m.photoBase64}" class="radar-attached-img" alt="Plakát" onclick="window.open(this.src)">` : ''}
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+          <span>Szervező: <strong>${escapeHtml(m.organizerName || 'Gyűjtő')}</strong></span>
+          ${isOwnerOrAdmin ? `<button class="btn btn-secondary btn-sm" data-action="delete-meetup" data-id="${m.id}" style="color:var(--danger); border-color:var(--danger);">🗑️ Törlés</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-safeAddListener('btn-close-user-profile', 'click', () => {
-  document.getElementById('modal-user-profile')?.classList.remove('open');
+safeAddListener('meetups-list', 'click', async (e) => {
+  const btn = e.target.closest('[data-action="delete-meetup"]');
+  if (!btn) return;
+  if (!confirm("Biztosan törölni szeretnéd ezt a találkozót?")) return;
+  try {
+    await db.collection("meetups").doc(btn.dataset.id).delete();
+    showToast("Találkozó törölve.");
+  } catch (err) {
+    showToast("Hiba: " + err.message);
+  }
 });
+
+function listenToMeetups() {
+  if (!db) return;
+  if (meetupsUnsubscribe) meetupsUnsubscribe();
+
+  meetupsUnsubscribe = db.collection("meetups")
+    .orderBy("postedAt", "desc")
+    .limit(30)
+    .onSnapshot(snap => {
+      meetupEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const mBadge = document.getElementById('meetup-badge');
+      if (mBadge && meetupEvents.length > 0) {
+        mBadge.textContent = meetupEvents.length;
+        mBadge.style.display = 'inline-block';
+      }
+
+      renderMeetups();
+    }, err => console.warn("Meetups listener:", err));
+}
+
+// =========================================================================
+// 10. STATISZTIKA, BEFEJEZÉSI ESÉLY & VÁROSI HŐTÉRKÉP
+// =========================================================================
+function renderCompletionOdds() {
+  const oddsCard = document.getElementById('completion-odds-card');
+  const oddsPct = document.getElementById('completion-odds-pct');
+  const oddsBar = document.getElementById('completion-odds-bar');
+  const oddsText = document.getElementById('completion-odds-text');
+
+  if (!oddsCard || !oddsPct || !oddsBar || !oddsText) return;
+
+  const myMissing = ensureArray(myProfile.kell);
+  if (myMissing.length === 0) {
+    oddsPct.textContent = '100%';
+    oddsBar.style.width = '100%';
+    oddsText.innerHTML = '<span style="color:var(--moss-soft);">Gratulálunk! Az albumod betelt! 🎉</span>';
+    return;
+  }
+
+  const availablePool = new Set();
+  allUsersData.forEach(u => {
+    if (u.id === (currentUser ? currentUser.uid : 'me')) return;
+    ensureArray(u.van).forEach(n => availablePool.add(n));
+  });
+
+  const matchedMissing = myMissing.filter(n => availablePool.has(n));
+  const percentage = Math.round((matchedMissing.length / myMissing.length) * 100);
+
+  oddsPct.textContent = `${percentage}%`;
+  oddsBar.style.width = `${percentage}%`;
+  oddsText.innerHTML = `A hiányzóidból <strong>${matchedMissing.length} / ${myMissing.length} db</strong> azonnal beszerezhető a közösségtől!`;
+}
+
+function renderHeatmap() {
+  const cityStats = {};
+  let totalPoolCount = 0;
+
+  allUsersData.forEach(u => {
+    const rawCity = (u.telepules || '').trim();
+    if (!rawCity) return;
+    const cityKey = normalizeText(rawCity);
+    if (!cityStats[cityKey]) {
+      cityStats[cityKey] = { name: rawCity, users: 0, duplicates: 0 };
+    }
+    cityStats[cityKey].users += 1;
+    
+    ensureArray(u.van).forEach(n => {
+      const q = (u.vanCounts && u.vanCounts[n]) ? u.vanCounts[n] : 1;
+      cityStats[cityKey].duplicates += q;
+      totalPoolCount += q;
+    });
+  });
+
+  const poolEl = document.getElementById('stats-total-pool-count');
+  if (poolEl) poolEl.textContent = `${totalPoolCount.toLocaleString('hu-HU')} db`;
+
+  const sortedCities = Object.values(cityStats).sort((a, b) => (b.users * 3 + b.duplicates) - (a.users * 3 + a.duplicates));
+
+  const pinsOverlay = document.getElementById('heatmap-overlay-pins');
+  if (pinsOverlay) {
+    pinsOverlay.innerHTML = '';
+    sortedCities.forEach(c => {
+      const norm = normalizeText(c.name);
+      const coords = CITY_COORDINATES[norm];
+      if (coords) {
+        const score = c.users * 2 + c.duplicates;
+        const heatCls = score >= 20 ? 'fire' : score >= 8 ? 'warm' : 'cool';
+        const size = score >= 20 ? 34 : score >= 8 ? 26 : 20;
+
+        const pin = document.createElement('div');
+        pin.className = `heat-pin ${heatCls}`;
+        pin.style.left = `${coords.x}%`;
+        pin.style.top = `${coords.y}%`;
+        pin.style.width = `${size}px`;
+        pin.style.height = `${size}px`;
+        pin.title = `${c.name}: ${c.users} gyűjtő, ${c.duplicates} dupla matrica`;
+        pin.textContent = c.users;
+        pin.onclick = () => filterMatchesByCityName(c.name);
+        pinsOverlay.appendChild(pin);
+      }
+    });
+  }
+
+  const cityListEl = document.getElementById('heatmap-city-list');
+  if (cityListEl) {
+    if (sortedCities.length === 0) {
+      cityListEl.innerHTML = '<p class="view-intro">Nincs elegendő adat a hőtérképhez.</p>';
+      return;
+    }
+
+    cityListEl.innerHTML = sortedCities.slice(0, 8).map((c, idx) => {
+      const score = c.users * 2 + c.duplicates;
+      const badgeCls = score >= 20 ? 'heat-chip-fire' : score >= 8 ? 'heat-chip-warm' : 'heat-chip-cool';
+      const label = score >= 20 ? '🔥 Izzik a csere' : score >= 8 ? '🟡 Pörög' : '🟢 Éledezve';
+
+      return `
+        <div class="stats-ranking-item" onclick="filterMatchesByCityName('${escapeHtml(c.name)}')">
+          <div>
+            <strong>#${idx + 1} ${escapeHtml(c.name)}</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-left:6px;">(${c.users} gyűjtő • ${c.duplicates} dupla)</span>
+          </div>
+          <span class="${badgeCls}">${label}</span>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function filterMatchesByCityName(cityName) {
+  myProfile.telepules = cityName;
+  switchTab('cserek');
+  const cityBtn = document.getElementById('btn-match-city');
+  if (cityBtn) setActiveMatchFilter(cityBtn, 'city');
+  showToast(`📍 Szűrés: ${cityName}`);
+}
 
 function renderStatistics() {
   const demandCount = {};
@@ -1289,13 +1560,19 @@ function renderStatistics() {
   `).join('');
   const uCount = document.getElementById('stats-users-count');
   if (uCount) uCount.textContent = allUsersData.length;
+
+  renderCompletionOdds();
+  renderHeatmap();
 }
 
 safeAddListener('btn-refresh-stats', 'click', () => {
   renderStatistics();
-  showToast("Statisztika frissítve.");
+  showToast("Statisztika és hőtérkép frissítve.");
 });
 
+// =========================================================================
+// 11. FOTÓBEOLVASÓ (AI VISION PROXY)
+// =========================================================================
 let scannerRecognizedNums = [];
 
 safeAddListener('btn-open-scanner', 'click', () => {
@@ -1925,14 +2202,12 @@ function downloadCertificateImage() {
   canvas.height = 800;
   const ctx = canvas.getContext('2d');
 
-  // Háttér
   const grad = ctx.createLinearGradient(0, 0, 1200, 800);
   grad.addColorStop(0, '#0D2E2C');
   grad.addColorStop(1, '#081B1A');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 1200, 800);
 
-  // Arany díszszegély
   ctx.strokeStyle = '#D89B4A';
   ctx.lineWidth = 10;
   ctx.strokeRect(30, 30, 1140, 740);
@@ -1941,7 +2216,6 @@ function downloadCertificateImage() {
   ctx.lineWidth = 2;
   ctx.strokeRect(45, 45, 1110, 710);
 
-  // Szövegek
   ctx.textAlign = 'center';
   
   ctx.fillStyle = '#D89B4A';
@@ -1956,12 +2230,10 @@ function downloadCertificateImage() {
   ctx.fillStyle = '#E3D5B8';
   ctx.fillText('Ezennel tanúsítjuk, hogy', 600, 290);
 
-  // Név
   ctx.font = 'bold 64px "Work Sans", sans-serif';
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(myProfile.nev || 'Gyűjtő', 600, 390);
 
-  // Vonal a név alatt
   ctx.strokeStyle = '#D89B4A';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -1978,11 +2250,9 @@ function downloadCertificateImage() {
   ctx.fillStyle = '#9FB3A3';
   ctx.fillText(`Kelt: ${new Date().toLocaleDateString('hu-HU')} • Lutra Csereplatform`, 600, 640);
 
-  // Logó / Ikon
   ctx.font = '60px sans-serif';
   ctx.fillText('🦦 🌍 🌿', 600, 720);
 
-  // Letöltés indítása
   const link = document.createElement('a');
   link.download = `Lutra_Szuperhos_Oklevel_${(myProfile.nev || 'Gyujto').replace(/\s+/g, '_')}.png`;
   link.href = canvas.toDataURL('image/png');
@@ -2151,6 +2421,7 @@ function initFirebase() {
         listenToMyMessages(user.uid);
         listenToAllUsers();
         listenToRadarReports();
+        listenToMeetups();
         listenToAnnouncements();
       } else {
         if (myDocUnsubscribe) myDocUnsubscribe();
@@ -2161,6 +2432,7 @@ function initFirebase() {
 
         listenToAllUsers();
         listenToRadarReports();
+        listenToMeetups();
         listenToAnnouncements();
 
         if (guestNotice) guestNotice.style.display = 'flex';
@@ -2265,6 +2537,7 @@ function listenToMyProfile(uid) {
 
       checkMandatoryProfile();
       refreshMatchesIfVisible();
+      renderCompletionOdds();
     }
   });
 }
