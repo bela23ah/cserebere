@@ -149,41 +149,53 @@ let activeContactTarget = {
   subject: ''
 };
 
-// Város koordináták a hőtérképhez
+// Város koordináták a valósághű térképhez (%-ban megadva)
 const CITY_COORDINATES = {
-  "budapest": { x: 49, y: 40 },
-  "győr": { x: 26, y: 32 },
-  "gyor": { x: 26, y: 32 },
-  "sopron": { x: 14, y: 32 },
-  "szombathely": { x: 15, y: 52 },
-  "zalaegerszeg": { x: 20, y: 65 },
-  "veszprém": { x: 35, y: 48 },
-  "veszprem": { x: 35, y: 48 },
-  "székesfehérvár": { x: 41, y: 46 },
-  "szekesfehervar": { x: 41, y: 46 },
-  "pécs": { x: 36, y: 82 },
-  "pecs": { x: 36, y: 82 },
-  "kaposvár": { x: 30, y: 72 },
-  "kaposvar": { x: 30, y: 72 },
-  "szekszárd": { x: 44, y: 72 },
-  "szekszard": { x: 44, y: 72 },
-  "kecskemét": { x: 55, y: 58 },
-  "kecskemet": { x: 55, y: 58 },
-  "szeged": { x: 64, y: 80 },
-  "békéscsaba": { x: 80, y: 68 },
-  "bekescsaba": { x: 80, y: 68 },
-  "szolnok": { x: 62, y: 48 },
-  "debrecen": { x: 83, y: 35 },
-  "nyíregyháza": { x: 86, y: 22 },
-  "nyiregyhaza": { x: 86, y: 22 },
-  "miskolc": { x: 70, y: 20 },
-  "eger": { x: 64, y: 28 },
-  "salgótarján": { x: 54, y: 20 },
-  "salgotarjan": { x: 54, y: 20 },
-  "tatabánya": { x: 38, y: 34 },
-  "tatabanya": { x: 38, y: 34 },
-  "érd": { x: 47, y: 43 },
-  "erd": { x: 47, y: 43 }
+  "budapest": { x: 52.5, y: 39.0 },
+  "győr": { x: 26.0, y: 27.0 },
+  "gyor": { x: 26.0, y: 27.0 },
+  "sopron": { x: 10.5, y: 30.0 },
+  "szombathely": { x: 13.0, y: 44.0 },
+  "zalaegerszeg": { x: 20.0, y: 56.0 },
+  "veszprém": { x: 35.0, y: 46.0 },
+  "veszprem": { x: 35.0, y: 46.0 },
+  "székesfehérvár": { x: 44.0, y: 45.0 },
+  "szekesfehervar": { x: 44.0, y: 45.0 },
+  "pécs": { x: 41.0, y: 83.0 },
+  "pecs": { x: 41.0, y: 83.0 },
+  "kaposvár": { x: 32.0, y: 73.0 },
+  "kaposvar": { x: 32.0, y: 73.0 },
+  "szekszárd": { x: 50.0, y: 73.0 },
+  "szekszard": { x: 50.0, y: 73.0 },
+  "kecskemét": { x: 61.0, y: 59.0 },
+  "kecskemet": { x: 61.0, y: 59.0 },
+  "szeged": { x: 66.0, y: 81.0 },
+  "békéscsaba": { x: 84.0, y: 69.0 },
+  "bekescsaba": { x: 84.0, y: 69.0 },
+  "szolnok": { x: 69.0, y: 51.0 },
+  "debrecen": { x: 88.0, y: 40.0 },
+  "nyíregyháza": { x: 90.0, y: 26.0 },
+  "nyiregyhaza": { x: 90.0, y: 26.0 },
+  "miskolc": { x: 77.0, y: 23.0 },
+  "eger": { x: 71.0, y: 31.0 },
+  "salgótarján": { x: 62.0, y: 21.0 },
+  "salgotarjan": { x: 62.0, y: 21.0 },
+  "tatabánya": { x: 42.0, y: 32.0 },
+  "tatabanya": { x: 42.0, y: 32.0 },
+  "érd": { x: 51.0, y: 43.0 },
+  "erd": { x: 51.0, y: 43.0 },
+  "dunaújváros": { x: 53.0, y: 53.0 },
+  "dunaujvaros": { x: 53.0, y: 53.0 },
+  "baja": { x: 54.0, y: 80.0 },
+  "hódmezővásárhely": { x: 71.0, y: 75.0 },
+  "hodmezovasarhely": { x: 71.0, y: 75.0 },
+  "orosháza": { x: 78.0, y: 73.0 },
+  "oroshaza": { x: 78.0, y: 73.0 },
+  "gyula": { x: 89.0, y: 68.0 },
+  "siófok": { x: 42.0, y: 50.0 },
+  "siofok": { x: 42.0, y: 50.0 },
+  "keszthely": { x: 27.0, y: 58.0 },
+  "nagykanizsa": { x: 21.0, y: 70.0 }
 };
 
 const FEJEZETEK = [
@@ -2605,3 +2617,64 @@ try {
 } catch (err) {
   console.error("Indítási hiba:", err);
 }
+
+// =========================================================================
+// GYŰJTŐ ADATLAP MODAL (Hiányzók és Duplák megtekintése)
+// =========================================================================
+function openUserProfileModal(uid) {
+  const targetUser = allUsersData.find(u => u.id === uid);
+  if (!targetUser) return showToast("Gyűjtő adatai nem találhatók.");
+
+  const modal = document.getElementById('modal-user-profile');
+  if (!modal) return;
+
+  const nameEl = document.getElementById('user-profile-modal-name');
+  const cityEl = document.getElementById('user-profile-modal-city');
+  if (nameEl) nameEl.textContent = `Gyűjtő: ${targetUser.nev || 'Névtelen'}`;
+  if (cityEl) cityEl.textContent = targetUser.telepules ? `📍 Település: ${targetUser.telepules}` : '📍 Nincs megadva település';
+
+  const mBox = document.getElementById('user-profile-missing-tags');
+  const vBox = document.getElementById('user-profile-van-tags');
+
+  // 1. Hiányzók listája matricanevekkel
+  if (mBox) {
+    if (targetUser.allowInspect === false) {
+      mBox.innerHTML = '<em style="color:var(--text-muted);">A gyűjtő elrejtette a hiányzóinak listáját.</em>';
+    } else if (!targetUser.kell || targetUser.kell.length === 0) {
+      mBox.innerHTML = '<span style="color:var(--moss-soft);">Minden matrica megvan neki! 🎉</span>';
+    } else {
+      mBox.innerHTML = targetUser.kell
+        .sort((a, b) => a - b)
+        .map(n => `<span style="display:inline-block; margin:2px 4px; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:999px; border:1px solid rgba(243,238,223,0.2);">#${n} ${escapeHtml(STICKER_NAMES[n] || '')}</span>`)
+        .join('');
+    }
+  }
+
+  // 2. Duplikátumok listája darabszámmal
+  if (vBox) {
+    if (!targetUser.van || targetUser.van.length === 0) {
+      vBox.innerHTML = '<em style="color:var(--text-muted);">Jelenleg nincs cserélhető duplája.</em>';
+    } else {
+      vBox.innerHTML = targetUser.van
+        .sort((a, b) => a - b)
+        .map(n => {
+          const q = (targetUser.vanCounts && targetUser.vanCounts[n] > 1) ? ` (${targetUser.vanCounts[n]}db)` : '';
+          return `<span style="display:inline-block; margin:2px 4px; background:rgba(107,138,90,0.25); color:var(--moss-soft); padding:2px 8px; border-radius:999px; border:1px solid var(--moss-soft);">#${n}${q} ${escapeHtml(STICKER_NAMES[n] || '')}</span>`;
+        })
+        .join('');
+    }
+  }
+
+  modal.classList.add('open');
+}
+
+// Adatlap bezárása (X gomb vagy háttérre kattintás)
+safeAddListener('btn-close-user-profile', 'click', () => {
+  document.getElementById('modal-user-profile')?.classList.remove('open');
+});
+
+document.getElementById('modal-user-profile')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-user-profile') {
+    e.target.classList.remove('open');
+  }
+});
