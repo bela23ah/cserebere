@@ -172,9 +172,15 @@
       </div>
 
       <div id="batch-input-box" class="batch-box">
-        <label style="display:block; font-size:0.85rem; margin-bottom:6px; font-weight:600;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label style="font-size:0.85rem; font-weight:700; color:var(--amber); margin:0;">
+            Tömeges számbemásolás
+          </label>
+          <button id="btn-close-batch-box" style="background:none; border:none; color:var(--sand); font-size:1rem; cursor:pointer; padding:0 4px;">✕</button>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 8px;">
           Másold be a számokat (pl. <code>12, 12, 12, 45, 88</code> vagy <code>12*3, 45*2, 88</code>):
-        </label>
+        </p>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <input type="text" id="batch-input-text" class="input-field" placeholder="12*3, 45*2, 88">
         </div>
@@ -1019,6 +1025,11 @@
         <button class="btn btn-secondary" id="btn-scanner-save-kell" style="flex:1; font-size:0.82rem; padding:8px;">🟤 Hiányzókhoz (Kell)</button>
         <button class="btn btn-blue" id="btn-scanner-save-foglalva" style="flex:1; font-size:0.82rem; padding:8px;">🔵 Foglalthoz</button>
       </div>
+<!-- ÚJ VÁGÓLAPRA MÁSOLÓ SZEKCIÓ -->
+      <div style="text-align:center; margin:8px 0 6px; font-size:0.75rem; color:var(--text-muted);">— vagy —</div>
+      <button class="btn btn-secondary" id="btn-scanner-copy-list" style="width:100%; font-size:0.82rem; padding:8px;">
+        Formázott számsor másolása vágólapra
+      </button>
     </div>
   </div>
 </div>
@@ -1158,6 +1169,14 @@
       <button class="btn btn-primary" id="btn-email-login" style="flex:1;">Belépés</button>
       <button class="btn btn-secondary" id="btn-email-signup" style="flex:1;">Új Regisztráció</button>
     </div>
+  </div>
+</div>
+
+<!-- KÉPNAGYÍTÓ (LIGHTBOX) MODAL -->
+<div id="modal-image-lightbox" class="modal-overlay" style="z-index: 3500; padding: 10px; background: rgba(0,0,0,0.85); cursor: pointer;">
+  <div style="position: relative; max-width: 95vw; max-height: 90vh; display: flex; justify-content: center; align-items: center;">
+    <button class="modal-close" id="btn-close-lightbox" style="top: -36px; right: 0; color: #FFF; font-size: 1.8rem;">✕</button>
+    <img id="lightbox-full-image" src="" style="max-width: 100%; max-height: 88vh; border-radius: var(--radius-sm); border: 2px solid var(--amber); object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,0.8);" alt="Nagyított fotó">
   </div>
 </div>
 
