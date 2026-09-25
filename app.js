@@ -1,5 +1,5 @@
 // =========================================================================
-// Lutra Album Cserebere (Lidl 2026) - app.js (v4.1 Teljes Változat)
+// Lutra Album Cserebere (Lidl 2026) - app.js (v3.9 - 1. RÉSZ)
 // =========================================================================
 
 const ALBUM_SIZE = 108;
@@ -842,7 +842,6 @@ document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
     renderGrid();
   });
 });
-
 // =========================================================================
 // NAVIGÁCIÓS ROUTER
 // =========================================================================
@@ -1483,6 +1482,7 @@ safeAddListener('search-results', 'click', (e) => {
     openUserProfileModal(btn.dataset.uid);
   }
 });
+
 // =========================================================================
 // ALBUMRADAR & FOTÓCSATOLÁS (10 PERCES KORLÁTTAL)
 // =========================================================================
@@ -1611,14 +1611,14 @@ function renderRadarReports() {
             <strong>${escapeHtml(storeLabel)}</strong>
           </div>
           <span class="${r.status ? 'badge-radar-van' : 'badge-radar-nincs'}">
-            ${r.status ? '🟢 Kapható' : '🔴 Elfogyott'}
+            ${r.status ? 'Kapható' : 'Elfogyott'}
           </span>
         </div>
         ${r.note ? `<p style="font-size:0.84rem; margin:4px 0; color:var(--sand);">„${escapeHtml(r.note)}”</p>` : ''}
         ${r.photoBase64 ? `<img src="${r.photoBase64}" class="radar-attached-img" alt="Bolti fotó" data-action="open-lightbox">` : ''}
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
-          <span>${escapeHtml(r.reporterName || 'Gyűjtő')} • 🕒 ${timeStr}</span>
-          ${isOwnerOrAdmin ? `<button class="btn btn-secondary btn-sm" data-action="delete-radar" data-id="${r.id}" style="color:var(--danger); border-color:var(--danger);">🗑️ Törlés</button>` : ''}
+          <span>${escapeHtml(r.reporterName || 'Gyűjtő')} • ${timeStr}</span>
+          ${isOwnerOrAdmin ? `<button class="btn btn-secondary btn-sm" data-action="delete-radar" data-id="${r.id}" style="color:var(--danger); border-color:var(--danger);">Törlés</button>` : ''}
         </div>
       </div>
     `;
@@ -1660,7 +1660,7 @@ function listenToRadarReports() {
 
       if (!isInitial && newCount > previousRadarCount && radarReports.length > 0) {
         const latest = radarReports[0];
-        triggerTopNotification(`Új bolti készletjelentés: ${latest.city} (${latest.status ? '🟢 Kapható' : '🔴 Elfogyott'})`, () => switchView('radar'));
+        triggerTopNotification(`Új bolti készletjelentés: ${latest.city} (${latest.status ? 'Kapható' : 'Elfogyott'})`, () => switchView('radar'));
       }
       previousRadarCount = newCount;
 
@@ -1741,7 +1741,7 @@ safeAddListener('btn-submit-meetup', async () => {
     if (document.getElementById('meetup-photo-input')) document.getElementById('meetup-photo-input').value = '';
     if (document.getElementById('meetup-photo-preview-box')) document.getElementById('meetup-photo-preview-box').style.display = 'none';
 
-    showToast("🎉 Találkozó sikeresen közzétéve!");
+    showToast("Találkozó sikeresen közzétéve.");
   } catch (err) {
     showToast("Hiba: " + err.message);
   }
@@ -1768,15 +1768,15 @@ function renderMeetups() {
       <div class="meetup-card">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
           <div>
-            <h3 style="margin:0; font-size:1.05rem;">📍 ${escapeHtml(m.city)} — ${escapeHtml(m.place)}</h3>
+            <h3 style="margin:0; font-size:1.05rem;">${escapeHtml(m.city)} — ${escapeHtml(m.place)}</h3>
           </div>
-          <span class="meetup-time-badge">🕒 ${escapeHtml(m.time)}</span>
+          <span class="meetup-time-badge">${escapeHtml(m.time)}</span>
         </div>
         ${m.description ? `<p style="font-size:0.86rem; margin:6px 0; color:var(--text-primary); white-space:pre-wrap;">${escapeHtml(m.description)}</p>` : ''}
         ${m.photoBase64 ? `<img src="${m.photoBase64}" class="radar-attached-img" alt="Plakát" data-action="open-lightbox">` : ''}
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
           <span>Szervező: <strong>${escapeHtml(m.organizerName || 'Gyűjtő')}</strong></span>
-          ${isOwnerOrAdmin ? `<button class="btn btn-secondary btn-sm" data-action="delete-meetup" data-id="${m.id}" style="color:var(--danger); border-color:var(--danger);">🗑️ Törlés</button>` : ''}
+          ${isOwnerOrAdmin ? `<button class="btn btn-secondary btn-sm" data-action="delete-meetup" data-id="${m.id}" style="color:var(--danger); border-color:var(--danger);">Törlés</button>` : ''}
         </div>
       </div>
     `;
@@ -2622,6 +2622,7 @@ safeAddListener('btn-copy-msg', () => {
   showToast("Üzenet kimásolva a vágólapra!");
 });
 
+// Partner e-mail címének másolása a vágólapra
 safeAddListener('btn-copy-partner-email', () => {
   const email = document.getElementById('contact-partner-email')?.textContent || '';
   if (!email) return showToast("Nincs másolható e-mail cím.");
@@ -3408,7 +3409,114 @@ function listenToAllUsers() {
   }, err => console.warn("All users listener:", err));
 }
 
-function listenToMyProfile
+function listenToMyProfile(uid) {
+  if (!db) return;
+  if (myDocUnsubscribe) myDocUnsubscribe();
+
+  myDocUnsubscribe = db.collection("public_profiles").doc(uid).onSnapshot(async pubSnap => {
+    let pubData = pubSnap.exists ? pubSnap.data() : null;
+    let userData = null;
+
+    try {
+      const uSnap = await db.collection("users").doc(uid).get();
+      if (uSnap.exists) userData = uSnap.data();
+    } catch (err) {}
+
+    const merged = { ...(userData || {}), ...(pubData || {}) };
+    const parsed = extractUserData(merged, uid);
+
+    if (parsed) {
+      const localVan = ensureArray(safeJsonParse('lutra_van', []));
+      const localKell = ensureArray(safeJsonParse('lutra_kell', []));
+      const localTime = parseInt(localStorage.getItem('lutra_updated_at') || '0', 10);
+      const cloudTime = pubData?.updatedAt?.toMillis ? pubData.updatedAt.toMillis() : (pubData?.localUpdatedAt || 0);
+
+      const cloudHasData = (parsed.van && parsed.van.length > 0) || (parsed.kell && parsed.kell.length > 0);
+      const localHasData = (localVan.length > 0) || (localKell.length > 0);
+
+      let finalVan = parsed.van;
+      let finalKell = parsed.kell;
+      let finalFoglalva = parsed.foglalva;
+      let finalVanCounts = parsed.vanCounts;
+      let finalFoglalvaCounts = parsed.foglalvaCounts;
+
+      if ((localHasData && !cloudHasData) || (localHasData && localTime > cloudTime + 1000)) {
+        finalVan = localVan;
+        finalKell = localKell;
+        finalFoglalva = ensureArray(safeJsonParse('lutra_foglalva', []));
+        finalVanCounts = safeJsonParse('lutra_van_counts', {});
+        finalFoglalvaCounts = safeJsonParse('lutra_foglalva_counts', {});
+
+        db.collection("public_profiles").doc(uid).set({
+          van: finalVan,
+          vanCounts: finalVanCounts,
+          kell: finalKell,
+          foglalva: finalFoglalva,
+          foglalvaCounts: finalFoglalvaCounts,
+          localUpdatedAt: localTime,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => {});
+      }
+
+      myProfile = {
+        ...myProfile,
+        nev: parsed.nev || myProfile.nev,
+        telepules: parsed.telepules || myProfile.telepules,
+        email: getFirstValidString(userData?.email, pubData?.email, myProfile.email),
+        privateNote: userData?.privateNote || localStorage.getItem('lutra_private_note') || '',
+        favorites: parsed.favorites && parsed.favorites.length >= 3 ? parsed.favorites : ensureArray(safeJsonParse('lutra_favorites', [9, 4, 35])),
+        isGiftOffering: parsed.isGiftOffering,
+        showEmailToUsers: parsed.showEmailToUsers,
+        emailNotifications: parsed.emailNotifications !== false,
+        allowInspect: parsed.allowInspect,
+        gdprAccepted: parsed.gdprAccepted,
+        van: finalVan,
+        kell: finalKell,
+        foglalva: finalFoglalva,
+        vanCounts: finalVanCounts,
+        foglalvaCounts: finalFoglalvaCounts || {}
+      };
+
+      localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
+      localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts || {}));
+      localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
+      localStorage.setItem('lutra_foglalva', JSON.stringify(myProfile.foglalva));
+      localStorage.setItem('lutra_foglalva_counts', JSON.stringify(myProfile.foglalvaCounts || {}));
+      localStorage.setItem('lutra_favorites', JSON.stringify(myProfile.favorites));
+
+      renderGrid();
+      renderAlbumChapter();
+
+      const nI = document.getElementById('prof-nev'); if (nI && myProfile.nev) nI.value = myProfile.nev;
+      const tI = document.getElementById('prof-telepules'); if (tI && myProfile.telepules) tI.value = myProfile.telepules;
+      const eI = document.getElementById('prof-email'); if (eI && myProfile.email) eI.value = myProfile.email;
+      const gI = document.getElementById('prof-gift'); if (gI) gI.checked = !!myProfile.isGiftOffering;
+      const seI = document.getElementById('prof-show-email'); if (seI) seI.checked = !!myProfile.showEmailToUsers;
+      const enI = document.getElementById('prof-email-notif'); if (enI) enI.checked = myProfile.emailNotifications !== false;
+      const aiI = document.getElementById('prof-allow-inspect'); if (aiI) aiI.checked = myProfile.allowInspect !== false;
+      const gdI = document.getElementById('prof-gdpr'); if (gdI) gdI.checked = !!myProfile.gdprAccepted;
+
+      initFavoriteSelects();
+      if (myProfile.favorites) {
+        if (document.getElementById('prof-fav-1')) document.getElementById('prof-fav-1').value = myProfile.favorites[0] || '';
+        if (document.getElementById('prof-fav-2')) document.getElementById('prof-fav-2').value = myProfile.favorites[1] || '';
+        if (document.getElementById('prof-fav-3')) document.getElementById('prof-fav-3').value = myProfile.favorites[2] || '';
+      }
+
+      const pNoteEl = document.getElementById('prof-private-note');
+      if (pNoteEl) {
+        pNoteEl.value = myProfile.privateNote;
+        const countEl = document.getElementById('note-char-count');
+        if (countEl) countEl.textContent = `${myProfile.privateNote.length}/200`;
+      }
+
+      checkMandatoryProfile();
+      refreshMatchesIfVisible();
+      renderCompletionOdds();
+    }
+  });
+}
+
 safeAddListener('btn-google-login', () => {
   if (!auth) return;
   (async () => {
