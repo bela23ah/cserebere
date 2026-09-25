@@ -623,6 +623,7 @@ function attachStickerInteraction(container) {
 }
 
 function saveMyState() {
+  const now = Date.now();
   myProfile.van = ensureArray(myProfile.van).sort((a, b) => a - b);
   myProfile.kell = ensureArray(myProfile.kell).filter(n => !myProfile.van.includes(n)).sort((a, b) => a - b);
   myProfile.foglalva = ensureArray(myProfile.foglalva).filter(n => !myProfile.van.includes(n) && !myProfile.kell.includes(n)).sort((a, b) => a - b);
@@ -634,13 +635,14 @@ function saveMyState() {
   localStorage.setItem('lutra_foglalva', JSON.stringify(myProfile.foglalva));
   localStorage.setItem('lutra_foglalva_counts', JSON.stringify(myProfile.foglalvaCounts || {}));
   localStorage.setItem('lutra_favorites', JSON.stringify(myProfile.favorites));
+  localStorage.setItem('lutra_updated_at', now.toString());
   
   renderGrid();
   renderAlbumChapter();
   refreshMatchesIfVisible();
   renderCompletionOdds();
 
-  if (currentUser && myProfile.gdprAccepted === true && db) {
+  if (currentUser && db) {
     db.collection("public_profiles").doc(currentUser.uid).set({
       nev: myProfile.nev,
       nickname: myProfile.nev,
@@ -657,6 +659,7 @@ function saveMyState() {
       kell: myProfile.kell,
       foglalva: myProfile.foglalva,
       foglalvaCounts: myProfile.foglalvaCounts || {},
+      localUpdatedAt: now,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).catch(() => {});
   }
@@ -3405,82 +3408,7 @@ function listenToAllUsers() {
   }, err => console.warn("All users listener:", err));
 }
 
-function listenToMyProfile(uid) {
-  if (!db) return;
-  if (myDocUnsubscribe) myDocUnsubscribe();
-
-  myDocUnsubscribe = db.collection("public_profiles").doc(uid).onSnapshot(async pubSnap => {
-    let pubData = pubSnap.exists ? pubSnap.data() : null;
-    let userData = null;
-
-    try {
-      const uSnap = await db.collection("users").doc(uid).get();
-      if (uSnap.exists) userData = uSnap.data();
-    } catch (err) {}
-
-    const merged = { ...(userData || {}), ...(pubData || {}) };
-    const parsed = extractUserData(merged, uid);
-
-    if (parsed) {
-      myProfile = {
-        ...myProfile,
-        nev: parsed.nev,
-        telepules: parsed.telepules,
-        email: getFirstValidString(userData?.email, pubData?.email, myProfile.email),
-        privateNote: userData?.privateNote || localStorage.getItem('lutra_private_note') || '',
-        favorites: parsed.favorites || ensureArray(safeJsonParse('lutra_favorites', [9, 4, 35])),
-        isGiftOffering: parsed.isGiftOffering,
-        showEmailToUsers: parsed.showEmailToUsers,
-        emailNotifications: parsed.emailNotifications !== false,
-        allowInspect: parsed.allowInspect,
-        gdprAccepted: parsed.gdprAccepted,
-        van: parsed.van,
-        kell: parsed.kell,
-        foglalva: parsed.foglalva,
-        vanCounts: parsed.vanCounts,
-        foglalvaCounts: parsed.foglalvaCounts || {}
-      };
-
-      localStorage.setItem('lutra_van', JSON.stringify(myProfile.van));
-      localStorage.setItem('lutra_van_counts', JSON.stringify(myProfile.vanCounts || {}));
-      localStorage.setItem('lutra_kell', JSON.stringify(myProfile.kell));
-      localStorage.setItem('lutra_foglalva', JSON.stringify(myProfile.foglalva));
-      localStorage.setItem('lutra_foglalva_counts', JSON.stringify(myProfile.foglalvaCounts || {}));
-      localStorage.setItem('lutra_favorites', JSON.stringify(myProfile.favorites));
-
-      renderGrid();
-      renderAlbumChapter();
-
-      const nI = document.getElementById('prof-nev'); if (nI) nI.value = myProfile.nev || '';
-      const tI = document.getElementById('prof-telepules'); if (tI) tI.value = myProfile.telepules || '';
-      const eI = document.getElementById('prof-email'); if (eI) eI.value = myProfile.email || '';
-      const gI = document.getElementById('prof-gift'); if (gI) gI.checked = !!myProfile.isGiftOffering;
-      const seI = document.getElementById('prof-show-email'); if (seI) seI.checked = !!myProfile.showEmailToUsers;
-      const enI = document.getElementById('prof-email-notif'); if (enI) enI.checked = myProfile.emailNotifications !== false;
-      const aiI = document.getElementById('prof-allow-inspect'); if (aiI) aiI.checked = myProfile.allowInspect !== false;
-      const gdI = document.getElementById('prof-gdpr'); if (gdI) gdI.checked = !!myProfile.gdprAccepted;
-
-      initFavoriteSelects();
-      if (myProfile.favorites) {
-        if (document.getElementById('prof-fav-1')) document.getElementById('prof-fav-1').value = myProfile.favorites[0] || '';
-        if (document.getElementById('prof-fav-2')) document.getElementById('prof-fav-2').value = myProfile.favorites[1] || '';
-        if (document.getElementById('prof-fav-3')) document.getElementById('prof-fav-3').value = myProfile.favorites[2] || '';
-      }
-
-      const pNoteEl = document.getElementById('prof-private-note');
-      if (pNoteEl) {
-        pNoteEl.value = myProfile.privateNote;
-        const countEl = document.getElementById('note-char-count');
-        if (countEl) countEl.textContent = `${myProfile.privateNote.length}/200`;
-      }
-
-      checkMandatoryProfile();
-      refreshMatchesIfVisible();
-      renderCompletionOdds();
-    }
-  });
-}
-
+function listenToMyProfile
 safeAddListener('btn-google-login', () => {
   if (!auth) return;
   (async () => {
