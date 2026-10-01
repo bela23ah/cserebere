@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /lutra-album-matrica-csere.html
+Allow: /lutra-album-matricak-listaja.html
+Allow: /hol-kaphato-lutra-album.html
+Sitemap: https://csereljokosan.hu/sitemap.xml
