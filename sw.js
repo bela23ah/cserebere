@@ -1,72 +1,50 @@
-// =========================================================================
-// Lutra Album Cserebere - Service Worker (sw.js v4.1)
-// =========================================================================
+// sw_v1.js – Cserélj Okosan service worker. Telepítéskor másold sw.js néven a gyökérbe.
+// Stratégia: kód/HTML/CSS = hálózat-első (mindig a friss verzió, offline a cache), képek = cache-első.
+// Idegen eredetű kéréseket (Firebase, Firestore, Worker, térkép, betűtípus) NEM érint és nem tárol.
+// Új kiadásnál növeld a CACHE értékét (v1 -> v2), a régi cache törlődik.
+try { importScripts("/push-sw.js"); } catch (e) { /* a push-sw.js még nincs feltöltve: nem baj */ }
 
-const CACHE_NAME = 'lutra-csere-v2.0';
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json'
-];
+const CACHE = "cs-shell-v2";
+const SHELL = ["/", "/index.html", "/style.css", "/app.js","/read-layer_v4.js", "/manifest.json", "/favicon.png", "/icon-192.png", "/logo-mark.png"];
 
-// 1. Telepítés és statikus fájlok gyorsítótárazása
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => {}))))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// 2. Aktiválás és régi gyorsítótárak kitakarítása
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((ks) => Promise.all(ks.filter((k) => k.startsWith("cs-shell-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// 3. Hálózati kérések kezelése: Network-first a dinamikus adatokhoz, Cache fallback
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith("/sw.js")) return;
 
-  // A Firestore és külső API hívásokat nem gyorsítótárazzuk, hagyjuk közvetlenül átmenni
-  if (
-    url.origin.includes('firestore.googleapis.com') ||
-    url.origin.includes('workers.dev') ||
-    url.origin.includes('firebaseio.com') ||
-    event.request.method !== 'GET'
-  ) {
+  const isImage = /\.(png|jpe?g|webp|svg|ico|gif)$/i.test(url.pathname);
+  if (isImage) {
+    e.respondWith(
+      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+        return res;
+      }).catch(() => hit))
+    );
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Ha sikeres a hálózati letöltés, frissítjük a gyorsítótárat
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Offline állapot esetén a gyorsítótárból szolgáljuk ki
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          if (event.request.headers.get('accept').includes('text/html')) {
-            return caches.match('./index.html');
-          }
-        });
-      })
+  e.respondWith(
+    fetch(req).then((res) => {
+      if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match("/index.html") : Response.error())))
   );
 });
