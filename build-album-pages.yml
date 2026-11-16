@@ -1,0 +1,32 @@
+name: Albumoldalak építése
+
+# Naponta egyszer, és kézzel is indítható (Actions fül -> "Run workflow"),
+# például egy új album felvétele után.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Albumok letöltése a Firestore-ból
+        run: python3 tools/fetch_albums.py albums.json
+      - name: Albumoldalak generálása
+        run: python3 tools/build_landing_pages.py albums.json . 2025
+      - name: Sitemap összeállítása
+        run: python3 tools/merge_sitemap.py
+      - name: Változások mentése
+        run: |
+          git config user.name "album-builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A album-*.html albumok.html okos-funkciok.html sitemap.xml sitemap_landing.xml albums.json
+          git diff --cached --quiet || (git commit -m "Albumoldalak frissítése" && git push)
