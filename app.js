@@ -1980,7 +1980,47 @@ const popover = document.getElementById('qty-popover');
 let currentGridMode = 'grid'; // 'grid' = Tiszta folyamatos rács, 'blocks' = Blokkosított nézet
 
 // LAKAT-SZÁMLÁLÓ: KIZÁRÓLAG AZ ELFOGADOTT ÉS POSTÁZOTT CSERÉK ZÁROLNAK!
+// Levezetett modell: a zárolás NEM módosítja a tárolt készletet, csak a megjelenített / kifelé közölt elérhető
+// mennyiséget csökkenti (elérhető = tárolt dupla − zárolás). Lezáráskor a tárolt készlet csökken, a zárolás megszűnik;
+// lemondáskor a zárolás szűnik meg, a készlet visszajön.
 function getActiveLockedCounts(albumId = currentAlbumId) {
+  const tot = getActiveLockedTotals(albumId);
+  if (albumId !== currentAlbumId) return tot;
+  let subs = safeJsonParse(`family_subs_${albumId}`, []);
+  if (!Array.isArray(subs) || subs.length === 0) return tot;
+  // Több füzet: a zárolás füzetenként külön jelenik meg (nem másolódik át a másikra); a duplák sorrendjében (1. füzet, 2. füzet…) osztjuk szét
+  const ids = [...new Set([1, ...subs.map(x => Number(x && x.id)).filter(n => Number.isInteger(n) && n > 1)])];
+  const curKey = getEffectiveAlbumKey();
+  const rem = { ...tot }, mine = {};
+  ids.forEach(id => {
+    const k = id > 1 ? `${albumId}_sub${id}` : albumId;
+    let van, vc;
+    if (k === curKey) { van = ensureArray(myProfile.van); vc = myProfile.vanCounts || {}; }
+    else {
+      const isMain = (k === 'lidl-lutra-2026');
+      van = ensureArray(safeJsonParse(`lutra_van_${k}`, isMain ? safeJsonParse('lutra_van', []) : []));
+      vc = safeJsonParse(`lutra_van_counts_${k}`, {});
+    }
+    van.forEach(n => {
+      const take = Math.min(rem[n] || 0, (vc && vc[n]) ? vc[n] : 1);
+      if (take > 0) { rem[n] -= take; if (k === curKey) mine[n] = (mine[n] || 0) + take; }
+    });
+  });
+  if (curKey === albumId) Object.keys(rem).forEach(n => { if (rem[n] > 0) mine[n] = (mine[n] || 0) + rem[n]; });
+  return mine;
+}
+function csEffQty(n, locks) { const st = (myProfile.vanCounts && myProfile.vanCounts[n]) ? myProfile.vanCounts[n] : 1; return Math.max(0, st - ((locks && locks[n]) || 0)); }
+// elérhető (zárolás nélküli) dupla-lista kifelé közléshez
+function csEffPublish(van, vc, locks) {
+  const outVan = [], outVc = {}, adj = {};
+  ensureArray(van).forEach(n => {
+    const q = (vc && vc[n]) ? vc[n] : 1, l = (locks && locks[n]) || 0, e = Math.max(0, q - l);
+    if (q - e > 0) adj[n] = q - e;
+    if (e > 0) { outVan.push(n); outVc[n] = e; }
+  });
+  return { van: outVan, vanCounts: outVc, adj };
+}
+function getActiveLockedTotals(albumId = currentAlbumId) {
   const counts = {};
   (myProfile.activeTrades || []).forEach(t => {
     const isLockedStatus = ['accepted', 'shipped'].includes(t.status);
@@ -2015,11 +2055,13 @@ function loadAlbumState(albumId) {
     // Öngyógyító lakat-tisztítás – csak akkor, ha a cserék már megérkeztek,
     // különben egy frissítés pillanatnyilag üres listával törölné a lakatokat
     if (tradesLoaded) {
-      const activeLocks = getActiveLockedCounts(albumId);
-      myProfile.foglalva = myProfile.foglalva.filter(n => (activeLocks[n] || 0) > 0);
-      Object.keys(myProfile.foglalvaCounts).forEach(k => {
-        if (!activeLocks[k]) delete myProfile.foglalvaCounts[k];
-      });
+      // Egyszeri áttérés az új zárolási modellre: a régi modell a „foglalva” listába is írta a zárolásokat – ezt egyszer töröljük,
+      // ezután a kék csempék kizárólag a kézzel jelöltek, a zárolás levezetett (cserékből számolt).
+      const migKey = 'cs_lockmig_v25_' + effKey;
+      if (!localStorage.getItem(migKey)) {
+        myProfile.foglalva = []; myProfile.foglalvaCounts = {};
+        localStorage.setItem(migKey, '1');
+      }
     }
 
     let savedNote = localStorage.getItem(`private_note_${effKey}`) || (effKey === 'lidl-lutra-2026' ? (localStorage.getItem('lutra_private_note') || '') : '');
@@ -2119,11 +2161,13 @@ function syncLutraDualSave(effKey) {
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(() => {});
 
+  const effCur = csEffPublish(myProfile.van, myProfile.vanCounts || {}, getActiveLockedCounts(currentAlbumId));
   const publicPayload = {
     collections: {
       [effKey]: {
-        van: myProfile.van,
-        vanCounts: myProfile.vanCounts || {},
+        van: effCur.van,
+        vanCounts: effCur.vanCounts,
+        lockAdj: effCur.adj,
         kell: myProfile.kell,
         foglalva: myProfile.foglalva,
         foglalvaCounts: myProfile.foglalvaCounts || {},
@@ -2137,9 +2181,10 @@ function syncLutraDualSave(effKey) {
   // Többfüzetes család: a mások által látott alap-kulcs az összevont, kifelé maradt állapot
   familyMergeVersion++;
   const merged = getFamilyMergedState(currentAlbumId);
+  const effM = csEffPublish(merged.van, merged.vanCounts, getActiveLockedTotals(currentAlbumId));
   if (merged.notebooks > 1) {
     publicPayload.collections[currentAlbumId] = {
-      van: merged.van, vanCounts: merged.vanCounts, kell: merged.kell,
+      van: effM.van, vanCounts: effM.vanCounts, lockAdj: effM.adj, kell: merged.kell,
       foglalva: merged.foglalva, foglalvaCounts: merged.foglalvaCounts, updatedAt: Date.now()
     };
   }
@@ -2147,8 +2192,10 @@ function syncLutraDualSave(effKey) {
   if (isRootLutra || currentAlbumId === 'lidl-lutra-2026') {
     const src = merged.notebooks > 1 ? merged : { van: myProfile.van, vanCounts: myProfile.vanCounts || {}, kell: myProfile.kell, foglalva: myProfile.foglalva, foglalvaCounts: myProfile.foglalvaCounts || {} };
     if (merged.notebooks > 1 || isRootLutra) {
-      publicPayload.van = src.van;
-      publicPayload.vanCounts = src.vanCounts;
+      const effR = merged.notebooks > 1 ? effM : effCur;
+      publicPayload.van = effR.van;
+      publicPayload.vanCounts = effR.vanCounts;
+      publicPayload.lockAdj = effR.adj;
       publicPayload.kell = src.kell;
       publicPayload.foglalva = src.foglalva;
       publicPayload.foglalvaCounts = src.foglalvaCounts;
@@ -2232,8 +2279,8 @@ function gridCellHtml(i, vanSet, kellSet, foglalvaSet, activeLocks, isFigure) {
   if (isFigure) cls += ' cell-figure'; // Valódi tojásforma figura és Kinder esetén!
   
   let badgesHtml = '';
-  const vQty = (isVan && myProfile.vanCounts && myProfile.vanCounts[i]) ? myProfile.vanCounts[i] : 1;
   const fQty = activeLocks[i] || 0;
+  const vQty = isVan ? csEffQty(i, activeLocks) : 1;
   if (isVan && vQty > 1) badgesHtml += `<span class="qty-badge">×${vQty}</span>`;
   if (fQty > 0) badgesHtml += `<span class="qty-badge locked-badge">🔒${fQty}</span>`;
   else if (isFog) {
@@ -2260,15 +2307,15 @@ function renderGrid() {
   const totalSize = getActiveAlbumSize();
   const isFigure = activeAlbum.type === 'figure' || activeAlbum.type === 'kinder' || (activeAlbum.title && /kinder|figura/i.test(activeAlbum.title));
   
-  const vanSet = new Set(ensureArray(myProfile.van));
+  const activeLocks = getActiveLockedCounts(currentAlbumId);
+  const vanSet = new Set(ensureArray(myProfile.van).filter(n => csEffQty(n, activeLocks) > 0));   // csak a zárolás nélküli, elérhető duplák
   const kellSet = new Set(ensureArray(myProfile.kell));
   const foglalvaSet = new Set(ensureArray(myProfile.foglalva));
-  const activeLocks = getActiveLockedCounts(currentAlbumId);
 
   const passes = (i) => {
     if (currentFilter === 'van') return vanSet.has(i);
     if (currentFilter === 'kell') return kellSet.has(i);
-    if (currentFilter === 'foglalva') return foglalvaSet.has(i);
+    if (currentFilter === 'foglalva') return foglalvaSet.has(i) || (activeLocks[i] || 0) > 0;
     return true;
   };
 
@@ -2679,9 +2726,11 @@ function updateBadgeCounts() {
   const cVan = document.getElementById('count-van');
   const cKell = document.getElementById('count-kell');
   const cFoglalva = document.getElementById('count-foglalva');
-  if (cVan) cVan.textContent = myProfile.van.length;
+  const lk = getActiveLockedCounts(currentAlbumId);
+  const lockUnits = Object.keys(lk).reduce((a, k) => a + (lk[k] || 0), 0);
+  if (cVan) cVan.textContent = ensureArray(myProfile.van).filter(n => csEffQty(n, lk) > 0).length;
   if (cKell) cKell.textContent = myProfile.kell.length;
-  if (cFoglalva) cFoglalva.textContent = myProfile.foglalva.length;
+  if (cFoglalva) cFoglalva.textContent = myProfile.foglalva.length + lockUnits;   // kék csempék + zárolások
 }
 
 // Egysoros rács szegmens-szűrő kattintáskezelő
@@ -2709,10 +2758,6 @@ function toggleStickerState(num) {
 
   // Lakatvédelem ellenőrzése kölcsönösen elfogadott cseréknél
   const activeLocks = getActiveLockedCounts(currentAlbumId);
-  if (activeLocks[num] && activeLocks[num] > 0 && myProfile.van.includes(num)) {
-    showToast(`🔒 A #${num} tétel zárolva van egy elfogadott csere miatt!`);
-    return;
-  }
 
   lastUndoState = {
     num,
@@ -2728,6 +2773,19 @@ function toggleStickerState(num) {
   const isFog = myProfile.foglalva.includes(num);
 
   let newState = '';
+
+  const lockN = activeLocks[num] || 0;
+  if (lockN > 0 && isVan) {
+    // Zárolt tétel: a készlet csak a zárolt mennyiségig csökkenthető, utána újabb kattintás újra növeli
+    const stored = (myProfile.vanCounts && myProfile.vanCounts[num]) ? myProfile.vanCounts[num] : 1;
+    if (stored > lockN) { myProfile.vanCounts[num] = lockN; newState = ''; showToast(`🔒 A #${num} tételből ${lockN} db zárolva van egy cseréhez – ennél kevesebbre nem csökkenthető.`); }
+    else { myProfile.vanCounts[num] = stored + 1; newState = 'van'; }
+    updateSingleCellDOM(num, newState);
+    updateBadgeCounts();
+    showUndoToast(num, newState);
+    saveMyStateFast();
+    return;
+  }
 
   if (!isVan && !isKell && !isFog) {
     myProfile.van.push(num);
@@ -2808,9 +2866,9 @@ function updateSingleCellDOM(num, state) {
     cell.querySelectorAll('.qty-badge').forEach(b => b.remove());
 
     let badgesHtml = '';
-    const vQty = (state === 'van' && myProfile.vanCounts?.[num]) ? myProfile.vanCounts[num] : 0;
     const activeLocks = getActiveLockedCounts(currentAlbumId);
     const fQty = activeLocks[num] || 0;
+    const vQty = (state === 'van') ? csEffQty(num, activeLocks) : 0;
 
     if (vQty > 1) badgesHtml += `<span class="qty-badge">×${vQty}</span>`;
     if (fQty > 0) badgesHtml += `<span class="qty-badge locked-badge">🔒${fQty}</span>`;
@@ -2825,7 +2883,8 @@ function updateSingleCellDOM(num, state) {
 function showQtyPopover(num, targetEl) {
   if (!popover || !targetEl) return;
   activePopoverNum = num;
-  let currentQty = myProfile.vanCounts[num] || (myProfile.foglalvaCounts?.[num] || 1);
+  const lkP = getActiveLockedCounts(currentAlbumId)[num] || 0;
+  let currentQty = myProfile.vanCounts[num] ? Math.max(1, myProfile.vanCounts[num] - lkP) : (myProfile.foglalvaCounts?.[num] || 1);
 
   document.querySelectorAll('.qty-pop-btn').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.qty, 10) === currentQty);
@@ -2932,7 +2991,7 @@ document.querySelectorAll('.qty-pop-btn').forEach(btn => {
     }
 
     if (!myProfile.van.includes(num)) myProfile.van.push(num);
-    myProfile.vanCounts[num] = qty;
+    myProfile.vanCounts[num] = qty + (getActiveLockedCounts(currentAlbumId)[num] || 0);   // a zárolt mennyiség fölé számolunk
 
     saveMyState();
     hideQtyPopover();
@@ -3691,7 +3750,7 @@ function computeBalancedPlan(users, overrides) {
   overrides = overrides || {};
   const myVan = new Set(ensureArray(getMyMatchVan()));
   const myKell = new Set(ensureArray(getMyMatchKell()).filter(n => !myVan.has(n)));
-  const locks = getActiveLockedCounts(currentAlbumId);
+  const locks = getActiveLockedTotals(currentAlbumId);
 
   const ordered = [...users].sort((a, b) => {
     const la = isLocalCityMatch(myProfile.locations || myProfile.telepules, a.locations || a.telepules) ? 1 : 0;
@@ -3769,7 +3828,7 @@ function computeBalancedPlan(users, overrides) {
 function buildBalancedOffer(u) {
   const myVan = new Set(ensureArray(getMyMatchVan()));
   const myKell = new Set(ensureArray(getMyMatchKell()).filter(n => !myVan.has(n)));
-  const locks = getActiveLockedCounts(currentAlbumId);
+  const locks = getActiveLockedTotals(currentAlbumId);
   const uVan = new Set(ensureArray(u.van));
   const uKell = new Set(ensureArray(u.kell).filter(n => !uVan.has(n)));
 
@@ -5238,14 +5297,7 @@ safeAddListener('active-trades-list', 'click', (e) => {
 
   if (btn.dataset.action === 'accept-trade') {
     trade.status = 'accepted';
-    // Kölcsönös elfogadáskor aktiválódik a lakat a rácson!
-    if (trade.givingItems) {
-      trade.givingItems.forEach(n => {
-        if (!myProfile.foglalva.includes(n)) myProfile.foglalva.push(n);
-        if (!myProfile.foglalvaCounts) myProfile.foglalvaCounts = {};
-        myProfile.foglalvaCounts[n] = (myProfile.foglalvaCounts[n] || 0) + 1;
-      });
-    }
+    // Kölcsönös elfogadáskor aktiválódik a zárolás – a rács a cserékből számolja (levezetett modell), nincs külön írás
 
     if (db && trade.tradeId) {
       db.collection("trades").doc(trade.tradeId).update({ status: 'accepted' }).catch(() => {});
@@ -5355,12 +5407,7 @@ safeAddListener('btn-accept-incoming-prompt', async () => {
   else myProfile.activeTrades.unshift(localTradeObj);
   cacheTradeLocal(localTradeObj);
 
-  // Kölcsönös elfogadáskor lép érvénybe a zárolás!
-  localTradeObj.givingItems.forEach(n => {
-    if (!myProfile.foglalva.includes(n)) myProfile.foglalva.push(n);
-    if (!myProfile.foglalvaCounts) myProfile.foglalvaCounts = {};
-    myProfile.foglalvaCounts[n] = (myProfile.foglalvaCounts[n] || 0) + 1;
-  });
+  // Kölcsönös elfogadáskor lép érvénybe a zárolás – levezetett modell, nincs külön írás
 
   saveMyState();
   renderActiveTradesPanel();
@@ -5579,8 +5626,8 @@ safeAddListener('btn-confirm-cancel-trade', () => {
     reasonText = document.getElementById('cancel-trade-custom-reason')?.value.trim() || 'Egyéb okból visszavonva';
   }
 
-  // FOGLALÁSOK ÉS LAKATOK FELOLDÁSA
-  if (trade.givingItems) {
+  // FOGLALÁSOK ÉS LAKATOK FELOLDÁSA – a zárolás levezetett, a csere lemondásával magától megszűnik
+  if (false && trade.givingItems) {
     trade.givingItems.forEach(n => {
       if (myProfile.foglalvaCounts && myProfile.foglalvaCounts[n]) {
         myProfile.foglalvaCounts[n] = Math.max(0, myProfile.foglalvaCounts[n] - 1);
@@ -5676,13 +5723,7 @@ safeAddListener('btn-submit-trade-rating', async () => {
         if (vIdx > -1) myProfile.van.splice(vIdx, 1);
       }
 
-      // Zárolások feloldása
-      if (myProfile.foglalvaCounts && myProfile.foglalvaCounts[n]) {
-        myProfile.foglalvaCounts[n] = Math.max(0, myProfile.foglalvaCounts[n] - 1);
-        if (myProfile.foglalvaCounts[n] === 0) delete myProfile.foglalvaCounts[n];
-      }
-      const fIdx = myProfile.foglalva.indexOf(n);
-      if (fIdx > -1) myProfile.foglalva.splice(fIdx, 1);
+      // A zárolás levezetett: a csere lezárásával (status: completed) magától megszűnik
     });
   }
 
@@ -6919,7 +6960,7 @@ function renderThreadedChat() {
 
     threadMap[key].messages.push(msg);
     threadMap[key].lastMessage = msg;
-    if (msg.toUid === currentUser.uid && msg.read !== true) {
+    if ((msg.toUid === currentUser.uid || msg.toUid === 'admin') && msg.read !== true) {
       threadMap[key].unreadCount++;
     }
   });
@@ -7020,7 +7061,7 @@ function openChatThread(threadObj) {
 
   if (currentUser && db) {
     threadObj.messages.forEach(msg => {
-      if (msg.toUid === currentUser.uid && msg.read !== true) {
+      if ((msg.toUid === currentUser.uid || (msg.toUid === 'admin' && currentUser.email === ADMIN_EMAIL)) && msg.read !== true) {
         db.collection("messages").doc(msg.id).update({
           read: true,
           readAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -7044,6 +7085,7 @@ function openChatThread(threadObj) {
 
     return `
       <div class="chat-bubble ${isMe ? 'outgoing' : 'incoming'}">
+        ${(!isMe && (m.toUid === 'admin' || m.isCharity)) ? `<div style="font-size:0.7rem; font-weight:800; opacity:.8; margin-bottom:2px;">🎁 Közös kalap · ${escapeHtml(m.fromName || 'Gyűjtő')}${m.fromCity ? ' (' + escapeHtml(m.fromCity) + ')' : ''}</div>` : ''}
         <div>${formatLinksWithAnchors(m.message || m.text || '')}</div>
         <div class="chat-bubble-meta">
           <span>${timeStr}</span>
@@ -7073,8 +7115,14 @@ async function sendChatReply() {
   if (!text || !activeChatThreadKey || !currentUser || !db) return;
 
   const parts = activeChatThreadKey.split('_');
-  const otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
-  const albumId = parts.slice(2).join('_') || currentAlbumId;
+  let otherUid = parts[0] === currentUser.uid ? parts[1] : parts[0];
+  let albumId = parts.slice(2).join('_') || currentAlbumId;
+  if (activeChatThreadKey.indexOf('_admin_charity_') > -1 || activeChatThreadKey.indexOf('admin_charity_') === 0) {
+    // Közös kalap szál: a másik fél a beküldő (nem az 'admin_charity' placeholder)
+    const tm = [...myIncomingMessages, ...myOutgoingMessages].find(m => getThreadKey(m) === activeChatThreadKey && m.fromUid && m.fromUid !== currentUser.uid);
+    if (tm) otherUid = tm.fromUid;
+    albumId = (activeChatThreadKey.split('admin_charity_')[1]) || currentAlbumId;
+  }
 
   const partnerUser = allUsersData.find(u => u.id === otherUid);
   const partnerName = partnerUser?.nev || document.getElementById('chat-thread-partner-name')?.textContent || 'Partner';
@@ -7188,7 +7236,7 @@ async function openUserProfileModal(uid) {
           return `
             <div style="background:rgba(0,0,0,0.3); padding:6px 8px; border-radius:4px; font-size:0.78rem;">
               <strong>${escapeHtml(r.fromName || 'Partner')}:</strong> ⭐ ${r.stars || 5}/5
-              <div style="color:var(--sand); font-style:italic;">„${escapeHtml(r.comment || 'Minden rendben és gyorsan zajlott!')}”</div>
+              ${r.comment ? `<div style="color:var(--sand); font-style:italic;">„${escapeHtml(r.comment)}”</div>` : ''}
             </div>
           `;
         }).join('');
@@ -7277,6 +7325,7 @@ function triggerTopNotification(iconOrText, textOrActionFn, actionFn) {
 function listenToMyMessages(uid) {
   if (!db) return;
   if (messagesUnsubscribe) messagesUnsubscribe();
+  let ownIncomingMsgs = [], adminInboxMsgs = [];
 
   const refresh = () => {
     myIncomingMessages.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -7313,16 +7362,27 @@ function listenToMyMessages(uid) {
       showToast("Új üzeneted érkezett!");
     }
     previousIncomingCount = newCount;
-    myIncomingMessages = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.deletedByRecipient !== true);
+    ownIncomingMsgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.deletedByRecipient !== true);
+    myIncomingMessages = [...ownIncomingMsgs, ...adminInboxMsgs];
     refresh();
   }, err => console.error("messages listener:", err));
+
+  // Admin: a „Közös kalap koordináció” (toUid = 'admin') üzenetek is a Beszélgetéseid alatt jelennek meg
+  let unsubAdmin = null;
+  if (currentUser && currentUser.email === ADMIN_EMAIL) {
+    unsubAdmin = db.collection("messages").where("toUid", "==", "admin").onSnapshot(snap => {
+      adminInboxMsgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.deletedByRecipient !== true);
+      myIncomingMessages = [...ownIncomingMsgs, ...adminInboxMsgs];
+      refresh();
+    }, err => console.error("admin inbox listener:", err));
+  }
 
   const unsubOut = db.collection("messages").where("fromUid", "==", uid).onSnapshot(snap => {
     myOutgoingMessages = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.deletedBySender !== true);
     refresh();
   }, err => console.error("messages listener:", err));
 
-  messagesUnsubscribe = () => { unsubIn(); unsubOut(); };
+  messagesUnsubscribe = () => { unsubIn(); unsubOut(); if (unsubAdmin) unsubAdmin(); };
 }
 
 // =========================================================================
@@ -9453,6 +9513,14 @@ function listenToMyProfile(uid) {
     }
 
     const parsed = extractUserData(merged, uid, effKey);
+    if (parsed && !subColData) {
+      // a nyilvános adat már a zárolás levonása utáni elérhető mennyiség: visszaadjuk, mert a zárolást itt újra levezetjük
+      const la = (merged.collections && merged.collections[effKey] && merged.collections[effKey].lockAdj) || (effKey === 'lidl-lutra-2026' ? merged.lockAdj : null);
+      if (la && typeof la === 'object') {
+        Object.keys(la).forEach(k => { const n = Number(k); parsed.vanCounts = parsed.vanCounts || {}; parsed.vanCounts[n] = (parsed.vanCounts[n] || 0) + la[k]; if (!parsed.van.includes(n)) parsed.van.push(n); });
+        parsed.van.sort((a, b) => a - b);
+      }
+    }
 
     if (parsed) {
       let loadedNote = userData?.privateNote;
@@ -9475,7 +9543,19 @@ function listenToMyProfile(uid) {
         window['__csPushed_' + effKey] = true;   // a helyi állapot az újabb: feltöltjük, hogy a többi eszköz is ezt lássa
         try { syncLutraDualSave(effKey); } catch (e) {}
       }
-      if (remoteIsNewer || isLocalEmpty) {
+      // Több füzetes családnál, ha nincs füzet-saját dokumentum, a gyökér adat az ÖSSZEVONT állapot: azt nem szabad saját füzetként betölteni (megduplázná a darabszámokat)
+      let famSubsArr = []; try { famSubsArr = safeJsonParse('family_subs_' + currentAlbumId, []); } catch (e) {}
+      const albumDataUsable = !((Array.isArray(famSubsArr) && famSubsArr.length > 0) && !subColData);
+      const applyAlbum = albumDataUsable && (remoteIsNewer || isLocalEmpty);
+      if (applyAlbum && !isLocalEmpty) {
+        // biztonsági mentés a felülírás előtt (az utolsó 3 megmarad)
+        try {
+          const bk = 'cs_backup_' + effKey + '_' + Date.now();
+          localStorage.setItem(bk, JSON.stringify({ van: myProfile.van, vc: myProfile.vanCounts, kell: myProfile.kell, fog: myProfile.foglalva, fc: myProfile.foglalvaCounts }));
+          Object.keys(localStorage).filter(k => k.indexOf('cs_backup_' + effKey + '_') === 0).sort().slice(0, -3).forEach(k => localStorage.removeItem(k));
+        } catch (e) {}
+      }
+      {
         myProfile = {
           ...myProfile,
           nev: parsed.nev,
@@ -9496,23 +9576,25 @@ function listenToMyProfile(uid) {
           trustScore: parsed.trustScore || 0,
           ratingsCount: parsed.ratingsCount || 0,
           recentReviews: parsed.recentReviews || [],
-          van: parsed.van,
-          kell: parsed.kell,
-          foglalva: parsed.foglalva,
-          vanCounts: parsed.vanCounts,
-          foglalvaCounts: parsed.foglalvaCounts || {},
+          van: applyAlbum ? parsed.van : myProfile.van,
+          kell: applyAlbum ? parsed.kell : myProfile.kell,
+          foglalva: applyAlbum ? parsed.foglalva : myProfile.foglalva,
+          vanCounts: applyAlbum ? parsed.vanCounts : myProfile.vanCounts,
+          foglalvaCounts: applyAlbum ? (parsed.foglalvaCounts || {}) : myProfile.foglalvaCounts,
           lastActive: parsed.lastActive || Date.now()
         };
 
-        localStorage.setItem(`lutra_updated_at_${effKey}`, remoteTime || Date.now());
         localStorage.setItem(`private_note_${effKey}`, myProfile.privateNote);
         if (effKey === 'lidl-lutra-2026') localStorage.setItem('lutra_private_note', myProfile.privateNote);
 
-        localStorage.setItem(`lutra_van_${effKey}`, JSON.stringify(myProfile.van));
-        localStorage.setItem(`lutra_van_counts_${effKey}`, JSON.stringify(myProfile.vanCounts || {}));
-        localStorage.setItem(`lutra_kell_${effKey}`, JSON.stringify(myProfile.kell));
-        localStorage.setItem(`lutra_foglalva_${effKey}`, JSON.stringify(myProfile.foglalva));
-        localStorage.setItem(`lutra_foglalva_counts_${effKey}`, JSON.stringify(myProfile.foglalvaCounts || {}));
+        if (applyAlbum) {
+          localStorage.setItem(`lutra_updated_at_${effKey}`, remoteTime || Date.now());
+          localStorage.setItem(`lutra_van_${effKey}`, JSON.stringify(myProfile.van));
+          localStorage.setItem(`lutra_van_counts_${effKey}`, JSON.stringify(myProfile.vanCounts || {}));
+          localStorage.setItem(`lutra_kell_${effKey}`, JSON.stringify(myProfile.kell));
+          localStorage.setItem(`lutra_foglalva_${effKey}`, JSON.stringify(myProfile.foglalva));
+          localStorage.setItem(`lutra_foglalva_counts_${effKey}`, JSON.stringify(myProfile.foglalvaCounts || {}));
+        }
 
         renderGrid();
         renderActiveTradesPanel();
@@ -10887,7 +10969,10 @@ try {
 
   // ---------- 4) Utólagos értékelés (üzenetváltás alapján, 30 napig) ----------
   const RETRO_KEY = 'cs_retro_done_v1';
-  const retroDone = () => { try { return JSON.parse(lsGet(RETRO_KEY, '[]')); } catch (e) { return []; } };
+  const RETRO_SKIP_KEY = 'cs_retro_skips_v1';   // { uid: { n: mellőzések száma, t: utolsó mellőzés ideje } }
+  const retroSkips = () => { try { return JSON.parse(lsGet(RETRO_SKIP_KEY, '{}')) || {}; } catch (e) { return {}; } };
+  // „kész” = már értékelt (vagy régi, egyértelműen nem visszaállítható bejegyzés) VAGY 3-szor mellőzött
+  const retroDone = () => { let a = []; try { a = JSON.parse(lsGet(RETRO_KEY, '[]')); } catch (e) {} const sk = retroSkips(); Object.keys(sk).forEach(u => { if ((sk[u].n || 0) >= 3) a.push(u); }); return a; };
   function retroCandidates() {
     if (!currentUser) return [];
     const me = currentUser.uid, now = Date.now(), launch = now < Date.parse('2027-01-15'), lim = launch ? Infinity : 30 * 24 * 3600 * 1000, done = new Set(retroDone());
@@ -10896,6 +10981,7 @@ try {
       if (!uid || uid === me || uid === 'admin' || done.has(uid)) return;
       const t = (m.createdAt && m.createdAt.seconds ? m.createdAt.seconds * 1000 : 0);
       if (!t || now - t > lim || m.isCharity) return;
+      const sk0 = retroSkips()[uid]; if (sk0 && t <= (sk0.t || 0)) return;   // mellőzés után csak újabb üzenetváltásnál kérdezi újra
       const x = map[uid] || (map[uid] = { uid, name: name || 'Gyűjtőtárs', last: 0, sent: 0, got: 0 });
       x.last = Math.max(x.last, t);
     };
@@ -10916,7 +11002,7 @@ try {
       box.addEventListener('click', (e) => {
         const r = e.target.closest('[data-retro-rate]'), s = e.target.closest('[data-retro-skip]');
         if (r) openRetroModal(r.dataset.retroRate, r.dataset.retroName);
-        if (s) { const d = retroDone(); d.push(s.dataset.retroSkip); lsSet(RETRO_KEY, JSON.stringify(d)); renderRetroBanner(); }
+        if (s) { const sk = retroSkips(), u = s.dataset.retroSkip; sk[u] = { n: ((sk[u] && sk[u].n) || 0) + 1, t: Date.now() }; lsSet(RETRO_SKIP_KEY, JSON.stringify(sk)); renderRetroBanner(); }
       });
     }
     box.innerHTML = `<div style="font-size:0.78rem; color:var(--amber); font-weight:800; margin-bottom:4px;">Cserélj Okosan – tájékoztató</div>
@@ -10967,7 +11053,18 @@ try {
     { id: 'taxi', t: 'Taxisofőr', d: 'Autóval elém jött a cseréhez', c: '#C9892F', i: '<path d="M4 15l1.500-5h13L20 15v4h-3v-2H7v2H4zM9 7h6v3H9z"/>' },
     { id: 'wonka', t: 'Wonka', d: 'Csokit tett a csomagba', c: '#7B5EA7', i: '<path d="M7 4h10l2 6H5zM6 10v9h12v-9M12 10v9"/>' },
     { id: 'celegyenes', t: 'Célegyenesben', d: 'Már csak pár tétel hiányzik az albumából', c: '#D89B4A', i: '<path d="M5 20V4M5 5h12l-2 4 2 4H5"/>' },
-    { id: 'hirnok', t: 'Közösségépítő', d: 'Segít jó hangulatot teremteni', c: '#C0504D', i: '<path d="M4 12v3h3l5 4V5L7 9H4zM16 9a4 4 0 0 1 0 6"/>' }
+    { id: 'hirnok', t: 'Közösségépítő', d: 'Segít jó hangulatot teremteni', c: '#C0504D', i: '<path d="M4 12v3h3l5 4V5L7 9H4zM16 9a4 4 0 0 1 0 6"/>' },
+    // --- a való életben véghezvitt tettek jelvényei (a csere utáni jelvényjavaslattal, vagy az admin adja) ---
+    { id: 'profi-csomagolo', t: 'Profi csomagoló', d: 'Gondosan, vízhatlanul, gyűrődésmentesen csomagolt küldemény', c: '#3F7F9E', i: '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>' },
+    { id: 'rendszereto', t: 'Rendszerető', d: 'Áttekinthető lista, kísérőüzenet, matricák zacskóban vagy celofánban', c: '#6B8E5A', i: '<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9l1.500 1.500L12 8M8 15h8M14 10h2"/>' },
+    { id: 'villampostazo', t: 'Villámpostázó', d: 'A csere után 1–2 napon belül feladta a csomagot', c: '#D4803A', i: '<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>' },
+    { id: 'szemelyes-atado', t: 'Személyes átadó', d: 'Személyesen találkozott a cseréhez, pontosan és kedvesen', c: '#8A5FA8', i: '<circle cx="8" cy="8" r="2.500"/><circle cx="16" cy="8" r="2.500"/><path d="M3 20c0-3 2-5 5-5s5 2 5 5M11 20c0-3 2-5 5-5s5 2 5 5"/>' },
+    { id: 'ajandekozo', t: 'Ajándékozó', d: 'Extra matricát vagy apróságot is tett a csomagba', c: '#C0504D', i: '<rect x="4" y="9" width="16" height="11" rx="1.500"/><path d="M12 9v11M4 13h16M12 9c-2-4-6-3-5 0 1 1 3 1 5 0zM12 9c2-4 6-3 5 0-1 1-3 1-5 0z"/>' },
+    { id: 'hibatlan', t: 'Hibátlan állapot', d: 'A kapott matricák/kártyák tökéletes, sértetlen állapotban érkeztek', c: '#4A8F86', i: '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>' },
+    { id: 'turelmes', t: 'Türelmes partner', d: 'Nem sürgetett, megvárta a másikat, rugalmasan egyeztetett', c: '#7A7F9C', i: '<circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M9 3h6"/>' },
+    { id: 'kilometerevo', t: 'Kilométerevő', d: 'Messzire elutazott vagy elment egy cseréért', c: '#A0522D', i: '<path d="M5 17l3-8h8l3 8M3 17h18M7 20a1.500 1.500 0 1 0 0-3 1.500 1.500 0 0 0 0 3zM17 20a1.500 1.500 0 1 0 0-3 1.500 1.500 0 0 0 0 3z"/>' },
+    { id: 'szervezo', t: 'Meetup-szervező', d: 'Találkozót szervezett a környékbeli gyűjtőknek', c: '#2E7D74', i: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/>' },
+    { id: 'kezdok-segitoje', t: 'Kezdők segítője', d: 'Türelmesen elmagyarázta a cserét egy újoncnak vagy gyereknek', c: '#B5892F', i: '<path d="M12 3l1.800 4.500L18 8l-3.500 3 1 4.500L12 13l-3.500 2.500 1-4.500L6 8l4.200-.500zM6 20h12"/>' }
   ];
   const badgeSvg = (b, size) => `<svg viewBox="0 0 48 48" width="${size || 44}" height="${size || 44}" role="img" aria-label="${esc(b.t)}"><circle cx="24" cy="24" r="22" fill="${b.c}"/><circle cx="24" cy="24" r="18" fill="none" stroke="#F3EEDF" stroke-width="1.500" stroke-dasharray="2 3"/><g transform="translate(12 12) scale(1)" fill="none" stroke="#F3EEDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${b.i}</g></svg>`;
   window.csBadgeSvg = (id, size) => { const b = BADGES.find(x => x.id === id); return b ? badgeSvg(b, size) : ''; };
@@ -11007,11 +11104,39 @@ try {
       if (q.length < 2) return showToast('Írj be legalább 2 betűt.');
       out.textContent = 'Keresés…';
       try {
-        const snap = await db.collection('public_profiles').where('nev', '>=', q).where('nev', '<=', q + '').limit(8).get();
-        if (snap.empty) { out.innerHTML = '<p style="opacity:.7;">Nincs találat (a kis/nagybetű számít).</p>'; return; }
-        out.innerHTML = snap.docs.map(x => { const p = x.data(), have = Array.isArray(p.badges) ? p.badges : [];
+        // kis/nagybetűre érzéketlen keresés: a név eleje három írásmódban + a települések
+        const cap = q.charAt(0).toUpperCase() + q.slice(1), low = q.toLowerCase();
+        const variants = [...new Set([q, cap, low])];
+        const found = {};
+        for (const v of variants) {
+          const snap = await db.collection('public_profiles').where('nev', '>=', v).where('nev', '<=', v + '').limit(12).get();
+          snap.docs.forEach(x => { found[x.id] = x; });
+        }
+        const docs = Object.values(found).slice(0, 12);
+        if (!docs.length) { out.innerHTML = '<p style="opacity:.7;">Nincs találat.</p>'; return; }
+        const albumKey = (typeof getEffectiveAlbumKey === 'function') ? getEffectiveAlbumKey() : currentAlbumId;
+        const fmtD = (t) => { try { const ms = t && t.seconds ? t.seconds * 1000 : (typeof t === 'number' ? t : Date.parse(t)); if (!ms) return '–'; return new Date(ms).toLocaleDateString('hu-HU', { year: 'numeric', month: '2-digit', day: '2-digit' }); } catch (e) { return '–'; } };
+        // hiányzók / duplák az aktuálisan megnyitott gyűjteményből (füzetenként külön dokumentum)
+        const stats = await Promise.all(docs.map(async x => {
+          try {
+            const c = await db.collection('public_profiles').doc(x.id).collection('collections').doc(albumKey).get();
+            let cd = c.exists ? c.data() : null; const p = x.data();
+            if (!cd && p.collections && p.collections[albumKey]) cd = p.collections[albumKey];
+            if (!cd && albumKey === 'lidl-lutra-2026') cd = p;
+            if (!cd) return null;
+            const van = Array.isArray(cd.van) ? cd.van : [], vc = cd.vanCounts || {};
+            return { kell: (cd.kell || []).length, van: van.length, db: van.reduce((a, n) => a + (vc[n] || 1), 0) };
+          } catch (e) { return null; }
+        }));
+        out.innerHTML = `<div style="font-size:0.72rem; opacity:.7; margin-bottom:6px;">Gyűjtemény a számokhoz: ${esc(getAlbumDisplayTitle ? getAlbumDisplayTitle(currentAlbumId) : currentAlbumId)}</div>` + docs.map((x, i) => { const p = x.data(), st = stats[i], have = Array.isArray(p.badges) ? p.badges : [];
+          const albums = Array.isArray(p.activeAlbums) ? p.activeAlbums.length : 0;
           return `<div style="background:rgba(0,0,0,.2); border-radius:10px; padding:8px 10px; margin-bottom:8px;" data-uid="${x.id}">
-            <div><strong>${esc(p.nev || '?')}</strong> · ${esc(p.telepules || '')} <span style="opacity:.55; font-size:0.7rem;">${x.id.slice(0, 6)}</span></div>
+            <div><strong>${esc(p.nev || '?')}</strong> · ${esc(p.telepules || '')} <span style="opacity:.55; font-size:0.7rem;">#${x.id.slice(0, 6)}</span></div>
+            <div style="font-size:0.74rem; opacity:.85; margin-top:3px; display:flex; flex-wrap:wrap; gap:2px 12px;">
+              <span>Hiányzik: <b>${st ? st.kell : '–'}</b></span><span>Dupla: <b>${st ? st.van + ' tétel / ' + st.db + ' db' : '–'}</b></span>
+              <span>Utolsó belépés: <b>${fmtD(p.lastActive || p.updatedAt)}</b></span>
+              <span>Értékelés: <b>${p.ratingsCount || 0}</b></span><span>Gyűjtemény: <b>${albums || '–'}</b></span><span>Jelvény: <b>${have.length}</b></span>
+            </div>
             <div style="display:flex; flex-wrap:wrap; gap:4px 12px; margin:6px 0;">${BADGES.map(b => `<label style="display:flex; align-items:center; gap:5px; font-size:0.8rem;"><input type="checkbox" data-b="${b.id}" ${have.includes(b.id) ? 'checked' : ''}>${badgeSvg(b, 20)} ${esc(b.t)}</label>`).join('')}</div>
             <button class="btn btn-primary btn-sm" data-save-badges>Mentés</button></div>`; }).join('');
       } catch (e) { out.textContent = 'Hiba: ' + e.message; }
@@ -11980,7 +12105,7 @@ try {
           const n = document.createElement('div'); n.id = 'cs-refresh-note';
           n.innerHTML = '<span>Frissítsd az oldalt, ha látni szeretnéd, hány cserepartnernél van meg a hiányzód!</span><span style="display:flex; gap:6px;"><button class="btn btn-secondary btn-sm" id="cs-refresh-go">Frissítés</button><button class="btn btn-secondary btn-sm" id="cs-refresh-x">✕</button></span>';
           document.body.appendChild(n);
-          n.querySelector('#cs-refresh-go').onclick = () => location.reload();
+          n.querySelector('#cs-refresh-go').onclick = () => (window.csReload ? csReload() : location.reload());
           n.querySelector('#cs-refresh-x').onclick = () => n.remove();
           setTimeout(() => n.remove(), 20000);
         }, 5000);
@@ -11994,7 +12119,7 @@ try {
   function addRefreshBtn() {
     const t = document.querySelector('.view-mode-toggle'); if (!t || document.getElementById('cs-refresh-btn')) return;
     const b = document.createElement('button'); b.id = 'cs-refresh-btn'; b.className = 'btn btn-secondary btn-sm'; b.title = 'Oldal frissítése'; b.textContent = '⟳'; b.style.marginLeft = 'auto';
-    b.onclick = () => location.reload();
+    b.onclick = () => (window.csReload ? csReload() : location.reload());
     t.insertAdjacentElement('afterend', b);
     t.style.display = t.style.display; 
   }
@@ -12186,4 +12311,66 @@ const CS_NEWS_OFF = true;
     if (v === 'hirek') { showToast('A Gyártói hírek rész átmenetileg nem érhető el.'); v = 'hub'; }
     return _p16(v);
   };
+})();
+
+
+// =========================================================================
+// cs_ext17 (v25): kisebb frissítés-jelzés + nézet visszaállítása, zárolás-megerősítő felugró ablakok
+// =========================================================================
+(function () {
+  const st = document.createElement('style');
+  st.textContent = '#cs-refresh-note{left:auto !important; right:10px !important; bottom:74px !important; max-width:250px; padding:6px 8px !important; font-size:.72rem !important; font-weight:600 !important; border-radius:10px !important; gap:6px !important; flex-wrap:wrap;} #cs-refresh-note .btn{padding:2px 8px !important; font-size:.7rem !important; min-height:0 !important;}';
+  document.head.appendChild(st);
+
+  // aktuális nézet követése
+  let curView = null;
+  const _sv = switchView;
+  window.switchView = switchView = function (v) { curView = v; return _sv.apply(this, arguments); };
+  window.csReload = function () {
+    try { sessionStorage.setItem('cs_restore', JSON.stringify({ view: curView, album: currentAlbumId, t: Date.now() })); } catch (e) {}
+    location.reload();
+  };
+  (function restore() {
+    let r = null; try { r = JSON.parse(sessionStorage.getItem('cs_restore') || 'null'); sessionStorage.removeItem('cs_restore'); } catch (e) {}
+    if (!r || !r.view || r.view === 'hub' || Date.now() - r.t > 60000) return;
+    const go = () => { try { if (r.album && r.album !== currentAlbumId && typeof selectAlbum === 'function') selectAlbum(r.album); switchView(r.view); } catch (e) {} };
+    setTimeout(go, 1200); setTimeout(go, 3200);
+  })();
+
+  // ---- zárolások időnkénti megerősítése ----
+  const KEY = 'cs_lockask_v1', EVERY = 3 * 86400000;
+  const gl = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } };
+  let asking = false;
+  function ask() {
+    if (asking || !currentUser || typeof tradesLoaded === 'undefined' || !tradesLoaded) return;
+    const log = gl(), now = Date.now();
+    const list = (myProfile.activeTrades || []).map((t, i) => ({ t, i })).filter(x => (x.t.status === 'accepted' || x.t.status === 'shipped') && x.t.albumId !== undefined && now - (log[x.t.tradeId || ('i' + x.i)] || 0) > EVERY);
+    // az első megjelenéskor ne zaklassuk azonnal: 1. alkalommal csak a 3 napnál régebbi cseréket kérdezzük
+    const old = list.filter(x => { const at = x.t.acceptedAt || x.t.createdAt || 0; const ms = at && at.seconds ? at.seconds * 1000 : (typeof at === 'number' ? at : 0); return !ms || now - ms > EVERY; });
+    if (!old.length) return;
+    asking = true; next(old, 0);
+  }
+  function mark(x) { const log = gl(); log[x.t.tradeId || ('i' + x.i)] = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(log)); } catch (e) {} }
+  function fire(action, idx) {
+    const host = document.getElementById('active-trades-list'); if (!host) return;
+    const b = document.createElement('button'); b.dataset.action = action; b.dataset.tradeIdx = String(idx); b.style.display = 'none'; host.appendChild(b); b.click(); b.remove();
+  }
+  function next(arr, k) {
+    if (k >= arr.length) { asking = false; return; }
+    const x = arr[k], t = x.t;
+    const m = document.createElement('div'); m.style.cssText = 'position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px;';
+    const items = (t.givingItems || []).map(n => getItemLabel(n, currentAlbumId)).join(', ');
+    m.innerHTML = `<div style="background:#F3EEDF; color:#0D2E2C; max-width:360px; width:100%; border-radius:14px; padding:18px;"><h3 style="margin:0 0 6px;">🔒 Még aktív ez a csere?</h3><p style="margin:0 0 10px; font-size:.9rem;"><b>${escapeHtml(t.partnerName || 'Partner')}</b> – nálad zárolva: ${escapeHtml(items || '–')}. (${k + 1}/${arr.length})</p><div style="display:flex; flex-direction:column; gap:8px;"><button class="btn btn-primary" data-a="ok">Igen, tartsuk zárolva</button><button class="btn btn-secondary" data-a="done">Már lezárult</button><button class="btn btn-secondary" data-a="no">Nem lesz belőle – oldjuk fel</button><button class="btn btn-secondary" data-a="later">Később</button></div></div>`;
+    document.body.appendChild(m);
+    m.addEventListener('click', (e) => {
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      m.remove();
+      if (a.dataset.a === 'later') { asking = false; return; }
+      mark(x);
+      if (a.dataset.a === 'done') { asking = false; fire('complete-trade', x.i); return; }
+      if (a.dataset.a === 'no') { asking = false; fire('cancel-trade', x.i); return; }
+      next(arr, k + 1);
+    });
+  }
+  setTimeout(() => { try { ask(); } catch (e) {} }, 9000);
 })();
